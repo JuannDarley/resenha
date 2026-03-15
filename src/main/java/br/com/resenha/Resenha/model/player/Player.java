@@ -2,14 +2,13 @@ package br.com.resenha.Resenha.model.player;
 
 
 import br.com.resenha.Resenha.model.address.Address;
-import br.com.resenha.Resenha.model.address.DataRegisterPlayer;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(name = "player")
+@Table(name = "players")
 @Entity(name = "Player")
 @Getter
 @NoArgsConstructor
@@ -29,7 +28,6 @@ public class Player {
 
 
     public Player(DataRegisterPlayer data) {
-        this.id = data.id();
         this.name = data.name();
         this.age = data.age();
         this.email = data.email();
