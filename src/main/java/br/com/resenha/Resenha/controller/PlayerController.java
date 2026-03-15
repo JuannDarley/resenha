@@ -32,7 +32,7 @@ public class PlayerController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<DataListPlayer>> listar(@PageableDefault(size = 10, sort = {"name"}) Pageable paginacao) {
+    public ResponseEntity<Page<DataListPlayer>> list(@PageableDefault(size = 10, sort = {"name"}) Pageable paginacao) {
         var page = playerRepository.findAll(paginacao).map(DataListPlayer::new);
         return ResponseEntity.ok(page);
     }
@@ -45,7 +45,7 @@ public class PlayerController {
 
     @PutMapping
     @Transactional
-    public ResponseEntity atualizar(@RequestBody @Valid DataUpadatePlayer data) {
+    public ResponseEntity update(@RequestBody @Valid DataUpadatePlayer data) {
         var player = playerRepository.getReferenceById(data.id());
         player.updateInformation(data);
 
@@ -54,7 +54,7 @@ public class PlayerController {
 
     @DeleteMapping("/{id}")
     @Transactional
-    public ResponseEntity excluir(@PathVariable Long id) {
+    public ResponseEntity delete(@PathVariable Long id) {
         playerRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
