@@ -31,31 +31,31 @@ public class Address {
 
     public void updateInformation(DataAddress data) {
 
-        if(this.street != null) {
+        if(data.street() != null) {
             this.street = data.street();
         }
 
-        if(this.neighborhood != null) {
+        if(data.neighborhood() != null) {
             this.neighborhood = data.neighborhood();
         }
 
-        if(this.zipCode != null) {
+        if(data.zipCode() != null) {
             this.zipCode = data.zipCode();
         }
 
-        if(this.number != null) {
+        if(data.number() != null) {
             this.number = data.number();
         }
 
-        if(this.complement != null) {
+        if(data.complement() != null) {
             this.complement = data.complement();
         }
 
-        if(this.city != null) {
+        if(data.city() != null) {
             this.city = data.city();
         }
 
-        if(this.state != null) {
+        if(data.state() != null) {
             this.state = data.state();
         }
 

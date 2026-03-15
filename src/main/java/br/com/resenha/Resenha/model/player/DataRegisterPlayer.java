@@ -11,7 +11,7 @@ public record DataRegisterPlayer(
         @NotBlank
         String name,
 
-        @NotBlank
+        @NotNull
         Long age,
 
         @NotBlank

@@ -33,4 +33,17 @@ public class Player {
         this.email = data.email();
         this.address = new Address(data.address());
     }
+
+    public void updateInformation(DataUpadatePlayer data) {
+        if (data.name() != null) {
+            this.name = data.name();
+        }
+        if (data.age() != null) {
+            this.age = data.age();
+        }
+        if (data.address() != null) {
+            this.address.updateInformation(data.address());
+        }
+
+    }
 }
