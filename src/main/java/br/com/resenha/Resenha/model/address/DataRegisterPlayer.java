@@ -1,0 +1,27 @@
+package br.com.resenha.Resenha.model.address;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public record DataRegisterPlayer(
+
+        @NotNull
+        Long id,
+
+        @NotBlank
+        String name,
+
+        @NotBlank
+        Long age,
+
+        @NotBlank
+        @Email
+        String email,
+
+        @NotNull
+        @Valid
+        DataAddress address
+) {
+}

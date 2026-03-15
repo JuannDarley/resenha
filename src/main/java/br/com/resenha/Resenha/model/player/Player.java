@@ -1,23 +1,38 @@
 package br.com.resenha.Resenha.model.player;
 
+
+import br.com.resenha.Resenha.model.address.Address;
+import br.com.resenha.Resenha.model.address.DataRegisterPlayer;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Table(name = "player")
+@Entity(name = "Player")
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(of = "id")
 public class Player {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private Integer age;
+    private Long age;
     private String email;
-    private String address;
+
+    @Embedded
+    private Address address;
 
 
-    public Player(Player dados) {
-        this.id = dados.id;
-        this.name = dados.name;
-        this.age = dados.age;
-        this.email = dados.email;
-        this.address = dados.address;
+    public Player(DataRegisterPlayer data) {
+        this.id = data.id();
+        this.name = data.name();
+        this.age = data.age();
+        this.email = data.email();
+        this.address = new Address(data.address());
     }
 }
