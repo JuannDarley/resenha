@@ -2,6 +2,7 @@ package br.com.resenha.Resenha.model.player;
 
 
 import br.com.resenha.Resenha.model.address.Address;
+import br.com.resenha.Resenha.model.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -23,14 +24,19 @@ public class Player {
     private Long age;
     private String email;
 
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Embedded
     private Address address;
 
 
-    public Player(DataRegisterPlayer data) {
+    public Player(DataRegisterPlayer data, User user) {
         this.name = data.name();
         this.age = data.age();
         this.email = data.email();
+        this.user = user;
         this.address = new Address(data.address());
     }
 

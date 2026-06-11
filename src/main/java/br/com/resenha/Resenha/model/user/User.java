@@ -1,6 +1,5 @@
 package br.com.resenha.Resenha.model.user;
 
-import br.com.resenha.Resenha.model.player.Player;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,10 +26,6 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private Role role;
-
-    @OneToOne
-    @JoinColumn(name = "player_id")
-    private Player player;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

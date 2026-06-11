@@ -15,10 +15,7 @@ public record DataRegisterRequest(
         String password,
 
         @NotNull(message = "This roles is PLAYER, OWNER e ADMIN")
-        Role role,
-
-        @NotNull
-        Long playerId
+        Role role
 
 
 ) {

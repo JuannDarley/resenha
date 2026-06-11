@@ -56,13 +56,11 @@ public class AuthenticationController {
             return ResponseEntity.badRequest().build();
         }
        
-        var player = playerRepository.getReferenceById(data.playerId());
         User newUser = new User();
 
         newUser.setPassword(passwordEncoder.encode(data.password()));
         newUser.setEmail(data.email());
         newUser.setRole(data.role());
-        newUser.setPlayer(player);
 
         userRepository.save(newUser);
 

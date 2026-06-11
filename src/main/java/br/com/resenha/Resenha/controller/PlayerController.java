@@ -2,6 +2,7 @@ package br.com.resenha.Resenha.controller;
 
 
 import br.com.resenha.Resenha.model.player.*;
+import br.com.resenha.Resenha.model.user.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import br.com.resenha.Resenha.infra.security.JWTUserData;
+import br.com.resenha.Resenha.model.user.User;
+import br.com.resenha.Resenha.model.user.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("/players")
@@ -19,13 +24,22 @@ public class PlayerController {
 
     @Autowired
     private PlayerRepository  playerRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @PostMapping
     @Transactional
     public ResponseEntity register (@RequestBody @Valid DataRegisterPlayer data, UriComponentsBuilder uriBuilder) {
 
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        var player = new Player(data);
+        JWTUserData userData = (JWTUserData) authentication.getPrincipal();
+
+        User user = userRepository.findById(userData.userId())
+                .orElseThrow();
+
+
+        var player = new Player(data, user);
         playerRepository.save(player);
         var uri = uriBuilder.path("/players/{id}").buildAndExpand(player.getId()).toUri();
         return ResponseEntity.created(uri).body(new DataDetailPlayer(player));
