@@ -4,7 +4,8 @@ public record DataListPlayer(
         Long id,
         String name,
         Long age,
-        String email
+        String email,
+        PlayerStatus playerStatus
         ) {
 
     public DataListPlayer (Player player){
@@ -12,7 +13,9 @@ public record DataListPlayer(
                 player.getId(),
                 player.getName(),
                 player.getAge(),
-                player.getEmail()
+                player.getEmail(),
+                player.getStatus()
+
         );
     }
 }
