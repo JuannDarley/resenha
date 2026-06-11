@@ -7,7 +7,8 @@ public record DataDetailPlayer(
         String name,
         Long age,
         String email,
-        Address address
+        Address address,
+        PlayerStatus playerStatus
 ) {
 
     public DataDetailPlayer(Player player) {
@@ -15,6 +16,7 @@ public record DataDetailPlayer(
                 player.getName(),
                 player.getAge(),
                 player.getEmail(),
-                player.getAddress());
+                player.getAddress(),
+                player.getStatus());
     }
 }

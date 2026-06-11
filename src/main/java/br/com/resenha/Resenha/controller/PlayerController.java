@@ -5,16 +5,11 @@ import br.com.resenha.Resenha.model.player.*;
 import br.com.resenha.Resenha.model.user.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-import br.com.resenha.Resenha.infra.security.JWTUserData;
 import br.com.resenha.Resenha.model.user.User;
-import br.com.resenha.Resenha.model.user.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
@@ -29,48 +24,66 @@ public class PlayerController {
 
     @PostMapping
     @Transactional
-    public ResponseEntity register (@RequestBody @Valid DataRegisterPlayer data, UriComponentsBuilder uriBuilder) {
+    public ResponseEntity register(@RequestBody @Valid DataRegisterPlayer data,
+                                   UriComponentsBuilder uriBuilder) {
 
         var authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
 
-        JWTUserData userData = (JWTUserData) authentication.getPrincipal();
+        if (playerRepository.findByUserId(user.getId()).isPresent()) {
+            throw new RuntimeException("User já possui um player");
+        }
 
-        User user = userRepository.findById(userData.userId())
-                .orElseThrow();
-
-
-        var player = new Player(data, user);
+        Player player = new Player(data, user);
         playerRepository.save(player);
-        var uri = uriBuilder.path("/players/{id}").buildAndExpand(player.getId()).toUri();
+        var uri = uriBuilder.path("/players/{id}")
+                .buildAndExpand(player.getId())
+                .toUri();
+
         return ResponseEntity.created(uri).body(new DataDetailPlayer(player));
     }
 
-    @GetMapping
-    public ResponseEntity<Page<DataListPlayer>> list(@PageableDefault(size = 10, sort = {"name"}) Pageable paginacao) {
-        var page = playerRepository.findAll(paginacao).map(DataListPlayer::new);
-        return ResponseEntity.ok(page);
-    }
 
-    @GetMapping("/{id}")
-    public ResponseEntity detail(@PathVariable Long id) {
-        var player = playerRepository.getReferenceById(id);
+    @GetMapping("/me")
+    public ResponseEntity myProfile() {
+
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        Player player = playerRepository.findByUserIdAndStatus(user.getId(), PlayerStatus.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("Player inativo ou não existe"));
         return ResponseEntity.ok(new DataDetailPlayer(player));
+
     }
 
-    @PutMapping
+    @PutMapping("/me")
     @Transactional
     public ResponseEntity update(@RequestBody @Valid DataUpadatePlayer data) {
-        var player = playerRepository.getReferenceById(data.id());
-        player.updateInformation(data);
+
+
+
+        User user = (User) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+        Player player = playerRepository.findByUserIdAndStatus(user.getId(), PlayerStatus.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("Player inativo"));
 
         return ResponseEntity.ok(new DataDetailPlayer(player));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/me")
     @Transactional
-    public ResponseEntity delete(@PathVariable Long id) {
-        playerRepository.deleteById(id);
+    public ResponseEntity delete() {
+
+        User user = (User) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        Player player = playerRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new RuntimeException("Player not found"));
+
+        player.deactivate();
+        playerRepository.save(player);
+
         return ResponseEntity.noContent().build();
     }
-
 }

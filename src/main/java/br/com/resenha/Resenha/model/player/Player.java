@@ -31,6 +31,10 @@ public class Player {
     @Embedded
     private Address address;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PlayerStatus status;
+
 
     public Player(DataRegisterPlayer data, User user) {
         this.name = data.name();
@@ -38,6 +42,7 @@ public class Player {
         this.email = data.email();
         this.user = user;
         this.address = new Address(data.address());
+        this.status = PlayerStatus.ACTIVE;
     }
 
     public void updateInformation(DataUpadatePlayer data) {
@@ -51,5 +56,13 @@ public class Player {
             this.address.updateInformation(data.address());
         }
 
+    }
+
+    public void deactivate() {
+        this.status = PlayerStatus.INACTIVE;
+    }
+
+    public void activate() {
+        this.status = PlayerStatus.ACTIVE;
     }
 }
