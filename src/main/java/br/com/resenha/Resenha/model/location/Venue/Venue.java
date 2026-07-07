@@ -3,6 +3,7 @@ package br.com.resenha.Resenha.model.location.Venue;
 
 import br.com.resenha.Resenha.model.address.Address;
 import br.com.resenha.Resenha.model.location.court.Court;
+import br.com.resenha.Resenha.model.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,13 +35,18 @@ public class Venue {
     @OneToMany(mappedBy = "venue", cascade = CascadeType.ALL)
     private List<Court> courts = new ArrayList<>();
 
-    public Venue(DataRegisterVenue data) {
+    @ManyToOne
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
+    public Venue(DataRegisterVenue data, User owner) {
         this.name = data.name();
         this.description = data.description();
         this.openingTime = data.openingTime();
         this.closingTime = data.closingTime();
         this.courtCount = data.courtCount();
         this.address = new Address(data.address());
+        this.owner = owner;
     }
 
     public void updateInformation(DataUpdateVenue data) {
