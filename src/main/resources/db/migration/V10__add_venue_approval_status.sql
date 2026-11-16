@@ -1,0 +1,6 @@
+ALTER TABLE venues
+    ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'PENDING';
+
+ALTER TABLE venues
+    ADD CONSTRAINT venues_status_check
+    CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED'));

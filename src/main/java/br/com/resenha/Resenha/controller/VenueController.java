@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,7 +71,7 @@ public class VenueController {
 
         var venue = venueRepository.findById(id)
                 .filter(v -> v.getOwner().getId().equals(owner.getId()))
-                .orElseThrow(() -> new RuntimeException("Venue não encontrada ou não pertence ao usuário"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Venue não encontrada ou não pertence ao usuário"));
 
         return ResponseEntity.ok(new DataDetailVenue(venue));
     }
@@ -84,7 +86,7 @@ public class VenueController {
 
         var venue = venueRepository.findById(data.id())
                 .filter(v -> v.getOwner().getId().equals(owner.getId()))
-                .orElseThrow(() -> new RuntimeException("Venue não encontrada ou não pertence ao usuário"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Venue não encontrada ou não pertence ao usuário"));
 
         venue.updateInformation(data);
 
@@ -101,7 +103,7 @@ public class VenueController {
 
         var venue = venueRepository.findById(id)
                 .filter(v -> v.getOwner().getId().equals(owner.getId()))
-                .orElseThrow(() -> new RuntimeException("Venue não encontrada ou não pertence ao usuário"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Venue não encontrada ou não pertence ao usuário"));
 
         venueRepository.delete(venue);
 

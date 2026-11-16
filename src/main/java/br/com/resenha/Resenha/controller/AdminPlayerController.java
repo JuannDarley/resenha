@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,7 +44,7 @@ public class AdminPlayerController {
 
         Player player = playerRepository.findById(id)
                 .filter(p -> p.getStatus() == PlayerStatus.ACTIVE)
-                .orElseThrow(() -> new RuntimeException("Player inativo ou não encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player inativo ou não encontrado"));
 
         return ResponseEntity.ok(new DataDetailPlayer(player));
     }
@@ -55,7 +57,7 @@ public class AdminPlayerController {
 
         Player player = playerRepository.findById(id)
                 .filter(p -> p.getStatus() == PlayerStatus.ACTIVE)
-                .orElseThrow(() -> new RuntimeException("Player inativo ou não encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player inativo ou não encontrado"));
 
         player.updateInformation(data);
 
@@ -67,10 +69,10 @@ public class AdminPlayerController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
 
         Player player = playerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Player não encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player não encontrado"));
 
         if (player.getStatus() == PlayerStatus.INACTIVE) {
-            throw new RuntimeException("Player já está inativo");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Player já está inativo");
         }
 
         player.deactivate(); // muda status para INACTIVE

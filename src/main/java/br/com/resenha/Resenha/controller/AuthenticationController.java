@@ -52,6 +52,10 @@ public class AuthenticationController {
     @PostMapping("/register")
     public ResponseEntity<DataRegisterResponse> register(@Valid @RequestBody DataRegisterRequest data) {
 
+        if (data.role() != Role.PLAYER && data.role() != Role.OWNER) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         if (userRepository.findUserByEmail(data.email()).isPresent()) {
             return ResponseEntity.badRequest().build();
         }

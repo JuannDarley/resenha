@@ -23,6 +23,10 @@ public class Venue {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private VenueStatus status = VenueStatus.PENDING;
+
     private String name;
     private String description;
     private String openingTime;
@@ -47,6 +51,14 @@ public class Venue {
         this.courtCount = data.courtCount();
         this.address = new Address(data.address());
         this.owner = owner;
+    }
+
+    public void approve() {
+        this.status = VenueStatus.APPROVED;
+    }
+
+    public void reject() {
+        this.status = VenueStatus.REJECTED;
     }
 
     public void updateInformation(DataUpdateVenue data) {

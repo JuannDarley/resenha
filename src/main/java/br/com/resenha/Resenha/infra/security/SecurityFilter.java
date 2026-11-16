@@ -1,6 +1,5 @@
 package br.com.resenha.Resenha.infra.security;
 
-import br.com.resenha.Resenha.model.user.User;
 import br.com.resenha.Resenha.model.user.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -38,17 +37,11 @@ public class SecurityFilter extends OncePerRequestFilter {
 
                 JWTUserData userData = optUser.get();
 
-                User user = userRepository.findById(userData.userId())
-                        .orElseThrow();
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                user,
-                                null,
-                                user.getAuthorities()
-                        );
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                userRepository.findById(userData.userId()).ifPresent(user -> {
+                    var authentication = new UsernamePasswordAuthenticationToken(
+                            user, null, user.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                });
 
             }
             filterChain.doFilter(request, response);

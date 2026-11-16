@@ -13,6 +13,7 @@ public record DataDetailVenue(
         String openingTime,
         String closingTime,
         Integer courtCount,
+        VenueStatus status,
         Address address,
         List<DataDetailCourt> courts
 ) {
@@ -23,6 +24,7 @@ public record DataDetailVenue(
                 venue.getOpeningTime(),
                 venue.getClosingTime(),
                 venue.getCourtCount(),
+                venue.getStatus(),
                 venue.getAddress(),
                 venue.getCourts().stream()
                         .map(DataDetailCourt::new)

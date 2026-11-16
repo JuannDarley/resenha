@@ -6,6 +6,8 @@ import br.com.resenha.Resenha.model.user.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +35,7 @@ public class PlayerController {
         User user = (User) authentication.getPrincipal();
 
         if (playerRepository.findByUserId(user.getId()).isPresent()) {
-            throw new RuntimeException("User já possui um player");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User já possui um player");
         }
 
         Player player = new Player(data, user);
@@ -52,7 +54,7 @@ public class PlayerController {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
         Player player = playerRepository.findByUserIdAndStatus(user.getId(), PlayerStatus.ACTIVE)
-                .orElseThrow(() -> new RuntimeException("Player inativo ou não existe"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player inativo ou não existe"));
         return ResponseEntity.ok(new DataDetailPlayer(player));
 
     }
@@ -67,8 +69,9 @@ public class PlayerController {
                 .getAuthentication()
                 .getPrincipal();
         Player player = playerRepository.findByUserIdAndStatus(user.getId(), PlayerStatus.ACTIVE)
-                .orElseThrow(() -> new RuntimeException("Player inativo"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player inativo"));
 
+        player.updateInformation(data);
         return ResponseEntity.ok(new DataDetailPlayer(player));
     }
 
@@ -81,7 +84,7 @@ public class PlayerController {
                 .getPrincipal();
 
         Player player = playerRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Player not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found"));
 
         player.deactivate();
         playerRepository.save(player);

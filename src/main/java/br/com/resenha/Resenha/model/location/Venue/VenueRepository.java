@@ -7,5 +7,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface VenueRepository extends JpaRepository<Venue, Long> {
+    Page<Venue> findAllByStatus(VenueStatus status, Pageable pageable);
+
     Page<Venue> findAllByOwnerId(Long id, Pageable paginacao);
 }

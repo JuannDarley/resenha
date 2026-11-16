@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +38,7 @@ public class CourtController {
 
         var venue = venueRepository.findById(data.venueId())
                 .filter(v -> v.getOwner().getId().equals(owner.getId()))
-                .orElseThrow(() -> new RuntimeException("Venue não encontrada ou não pertence ao usuário"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Venue não encontrada ou não pertence ao usuário"));
 
         var court = new Court(data, venue);
         courtRepository.save(court);
@@ -66,7 +68,7 @@ public class CourtController {
 
         var court = courtRepository.findById(id)
                 .filter(c -> c.getVenue().getOwner().getId().equals(owner.getId()))
-                .orElseThrow(() -> new RuntimeException("Court não encontrada ou não pertence ao usuário"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Court não encontrada ou não pertence ao usuário"));
 
         return ResponseEntity.ok(new DataDetailCourt(court));
     }
@@ -81,7 +83,7 @@ public class CourtController {
 
         var court = courtRepository.findById(data.id())
                 .filter(c -> c.getVenue().getOwner().getId().equals(owner.getId()))
-                .orElseThrow(() -> new RuntimeException("Court não encontrada ou não pertence ao usuário"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Court não encontrada ou não pertence ao usuário"));
 
         court.updateInformation(data);
 
@@ -98,7 +100,7 @@ public class CourtController {
 
         var court = courtRepository.findById(id)
                 .filter(c -> c.getVenue().getOwner().getId().equals(owner.getId()))
-                .orElseThrow(() -> new RuntimeException("Court não encontrada ou não pertence ao usuário"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Court não encontrada ou não pertence ao usuário"));
 
         courtRepository.delete(court);
 

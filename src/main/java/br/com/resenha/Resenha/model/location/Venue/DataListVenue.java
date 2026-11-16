@@ -5,10 +5,11 @@ public record DataListVenue(
         String name,
         String openingTime,
         String closingTime,
-        Integer courtCount
+        Integer courtCount,
+        VenueStatus status
 ) {
     public DataListVenue(Venue venue) {
         this(venue.getId(), venue.getName(), venue.getOpeningTime(),
-                venue.getClosingTime(), venue.getCourtCount());
+                venue.getClosingTime(), venue.getCourtCount(), venue.getStatus());
     }
 }
