@@ -44,6 +44,7 @@ public class Venue {
     private User owner;
 
     public Venue(DataRegisterVenue data, User owner) {
+        OperatingHours.validate(data.openingTime(), data.closingTime());
         this.name = data.name();
         this.description = data.description();
         this.openingTime = data.openingTime();
@@ -62,6 +63,8 @@ public class Venue {
     }
 
     public void updateInformation(DataUpdateVenue data) {
+        OperatingHours.validate(data.openingTime() == null ? openingTime : data.openingTime(),
+                data.closingTime() == null ? closingTime : data.closingTime());
         if (data.name() != null) this.name = data.name();
         if (data.description() != null) this.description = data.description();
         if (data.openingTime() != null) this.openingTime = data.openingTime();

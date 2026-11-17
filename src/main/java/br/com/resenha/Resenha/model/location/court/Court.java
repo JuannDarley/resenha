@@ -19,6 +19,8 @@ public class Court {
 
     private String name;
 
+    private Integer minimumParticipants;
+
     @Enumerated(EnumType.STRING)
     private CourtType type;
 
@@ -29,11 +31,13 @@ public class Court {
     public Court(DataRegisterCourt data, Venue venue) {
         this.name = data.name();
         this.type = data.type();
+        this.minimumParticipants = data.minimumParticipants();
         this.venue = venue;
     }
 
     public void updateInformation(DataUpdateCourt data) {
         if (data.name() != null) this.name = data.name();
         if (data.type() != null) this.type = data.type();
+        if (data.minimumParticipants() != null) this.minimumParticipants = data.minimumParticipants();
     }
 }

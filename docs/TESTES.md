@@ -37,11 +37,17 @@ O teste inicia o servidor estático, usa a API em porta aleatória com PostgreSQ
 | Isolamento entre proprietários | Listas, consulta, edição, exclusão e cadastro de quadra em local alheio | ApiIntegrationTest |
 | Validação de quadras e estabelecimentos | HTTP 400 para campos obrigatórios e enum inválido | ApiIntegrationTest |
 | Banco novo e todas as migrations | Flyway ativo + Hibernate validate + constraint de status | ApiIntegrationTest, ResenhaApplicationTests |
-| Atualização V9 → V10 com estabelecimento antigo | Schema temporário separado; preserva dados e atribui PENDING | MigrationUpgradeTest |
+| Atualização V9 → V12 com estabelecimento e quadra antigos | Schema temporário separado; preserva dados e atribui PENDING | MigrationUpgradeTest |
 | Interface: cadastro/login de jogador, perfil, edição após recarga, sessão e logout | Navegador → frontend real → API real → PostgreSQL | BrowserE2ETest, scripts/browser_e2e.py |
 | Interface: proprietário cadastra estabelecimento e quadra; ADMIN consulta jogador | Mesmo fluxo completo, sem simular respostas da API | BrowserE2ETest, scripts/browser_e2e.py |
 
 Os testes HTTP usam servidor real em porta aleatória, sem repositories simulados. As contas ADMIN dos testes são preparadas diretamente no banco temporário; o cadastro público permanece bloqueado.
+
+## Quadras e disponibilidade
+
+A suíte também cobre Vôlei/Basquete, mínimo positivo, atualização de quadras antigas, horários de funcionamento válidos, slots completos de 1h, funcionamento após meia-noite e fuso de São Paulo. Os testes HTTP verificam persistência, bloqueios concorrentes idempotentes, isolamento, aprovação e exclusão em cascata dos bloqueios. O E2E configura modalidade/mínimo e bloqueia/libera um horário pela interface.
+
+Detalhes e contratos: [QUADRAS-E-DISPONIBILIDADE.md](QUADRAS-E-DISPONIBILIDADE.md).
 
 ## Correções encontradas durante a ampliação
 
@@ -54,4 +60,16 @@ Os testes HTTP usam servidor real em porta aleatória, sem repositories simulado
 
 Aprovação/rejeição ainda não têm tela no frontend: sua cobertura completa está na API. O E2E da interface não verifica aprovação, exclusões com confirmação, layout visual ou acessibilidade. Não há meta de cobertura de linhas nem alegação de cobrir todas as combinações possíveis.
 
-Reservas, horários, partidas, pagamentos e regras futuras não são exercitados porque ainda não estão implementados. O segredo JWT permanece no código conforme a decisão atual do projeto.
+Criação de agendamentos com dados iniciais da partida, RN01, cota diária, conflitos e disponibilidade têm cobertura. Participantes, pagamentos e o ciclo de confirmação/cancelamento automático continuam fora do escopo implementado. O segredo JWT permanece no código conforme a decisão atual do projeto.
+
+## Regressões adicionais de disponibilidade
+
+Foram adicionados seis testes para cobrir: persistência de bloqueios após meia-noite; alteração de funcionamento preservando sobreposições e recusando a grade antiga; isolamento por quadra/data e exclusão em cascata pelo estabelecimento; constraints de mínimo e referência da quadra; consulta da madrugada pela data de abertura anterior; e fronteiras exatas entre slots adjacentes.
+
+Esses casos estão em `ApiIntegrationTest` (quatro testes HTTP/banco) e `CourtAvailabilityServiceTest` (dois unitários com relógio fixo).
+
+## Agendamentos
+
+As regras de criação ficam em `validation/booking`, com testes unitários no pacote correspondente. `BookingIntegrationTest` usa HTTP/JWT reais, PostgreSQL e relógio fixo, cobrindo RN01, cota por criação (incluindo canceladas), reinício da cota à meia-noite, aprovação, configuração, modalidade, grade, bloqueios, histórico e privacidade. Os testes concorrentes sincronizam as tentativas e verificam reservas duplicadas, cota em quadras diferentes e disputa com bloqueio manual. A constraint de sobreposição do PostgreSQL também é exercitada diretamente.
+
+O E2E cria um agendamento privado pela interface, verifica persistência após recarga, retirada do slot livre e visualização de RESERVADO pelo proprietário sem ação de liberação. Contratos, organização e limites em [AGENDAMENTOS.md](AGENDAMENTOS.md).
