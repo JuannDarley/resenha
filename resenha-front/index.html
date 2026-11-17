@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101510" />
+    <title>Resenha — futebol, do seu jeito</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#inicio" aria-label="Resenha início">
+          <span class="brand-mark">R<span>+</span></span>
+          <span class="brand-name">RESENHA<small>FUTEBOL & COMUNIDADE</small></span>
+        </a>
+        <div class="side-label">MENU PRINCIPAL</div>
+        <nav class="main-nav" aria-label="Navegação principal">
+          <button class="nav-link active" data-view="inicio"><span class="nav-icon">◈</span> Visão geral</button>
+          <button class="nav-link" data-view="quadras"><span class="nav-icon">▦</span> Minhas quadras</button>
+          <button class="nav-link" data-view="bookings"><span class="nav-icon">◷</span> Agendamentos</button>
+          <button class="nav-link" data-view="jogador"><span class="nav-icon">◎</span> Perfil de jogador</button>
+          <button class="nav-link admin-only hidden" data-view="admin"><span class="nav-icon">♙</span> Jogadores</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="api-indicator"><span class="status-dot"></span><div><b>API RESENHA</b><small id="api-status">verificando conexão</small></div></div>
+          <button class="nav-link logout" id="logout"><span class="nav-icon">↪</span> Sair da conta</button>
+          <div class="sidebar-foot">FEITO PRA QUEM AMA JOGAR <span>●</span></div>
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar">
+          <div class="breadcrumb"><span>RESENHA</span><i>/</i><b id="crumb-current">VISÃO GERAL</b></div>
+          <div class="topbar-actions"><span class="live-chip"><span></span> TEMPORADA ABERTA</span><button class="avatar" id="avatar">R</button></div>
+        </header>
+
+        <section id="auth-screen" class="auth-screen">
+          <div class="auth-art">
+            <div class="pitch-lines"></div><span class="auth-kicker">A SUA PRÓXIMA PARTIDA COMEÇA AQUI</span>
+            <h1>JOGA.<br /><em>MARCA.</em><br />RESENHA.</h1>
+            <p>Encontre seu campo, organize a partida e faça o que importa: jogar junto.</p>
+            <div class="auth-foot"><span>01 — 90 MINUTOS DE PURA RESENHA</span><span>● ● ●</span></div>
+          </div>
+          <div class="auth-card-wrap"><div class="auth-card">
+            <div class="auth-switch"><button class="auth-tab selected" data-auth="login">Entrar</button><button class="auth-tab" data-auth="register">Criar conta</button></div>
+            <div id="login-panel">
+              <span class="eyebrow">BEM-VINDO DE VOLTA</span><h2>Vamos pro jogo.</h2><p class="muted">Entre com seu e-mail para continuar.</p>
+              <form id="login-form" class="form-stack">
+                <label>E-mail<input name="email" type="email" placeholder="voce@email.com" required autocomplete="email" /></label>
+                <label>Senha<input name="password" type="password" placeholder="Sua senha" required autocomplete="current-password" /></label>
+                <label>Entrar como<select name="role"><option value="PLAYER">Jogador</option><option value="OWNER">Dono de estabelecimento</option><option value="ADMIN">Administrador</option></select></label>
+                <button class="button button-primary full" type="submit">ENTRAR NA RESENHA <span>↗</span></button>
+              </form>
+            </div>
+            <div id="register-panel" class="hidden">
+              <span class="eyebrow">FAÇA PARTE DO TIME</span><h2>Crie sua conta.</h2><p class="muted">Escolha como quer participar.</p>
+              <form id="register-form" class="form-stack">
+                <label>E-mail<input name="email" type="email" placeholder="voce@email.com" required autocomplete="email" /></label>
+                <label>Senha<input name="password" type="password" minlength="6" placeholder="Mínimo de 6 caracteres" required autocomplete="new-password" /></label>
+                <label>Quero entrar como<select name="role"><option value="PLAYER">Jogador</option><option value="OWNER">Dono de estabelecimento</option><option value="ADMIN">Administrador</option></select></label>
+                <button class="button button-primary full" type="submit">CRIAR CONTA <span>↗</span></button>
+              </form>
+              <p class="form-note">O cadastro cria sua conta de acesso. O perfil de jogador pode ser completado depois.</p>
+            </div>
+            <div class="auth-message" id="auth-message" role="status"></div>
+          </div><div class="auth-legal">RESENHA © 2025 <span>•</span> TODO MUNDO EM CAMPO</div></div>
+        </section>
+
+        <section id="dashboard" class="dashboard hidden">
+          <div class="hero-banner">
+            <div class="hero-copy"><span class="eyebrow">QUARTA-FEIRA · FUTEBOL É ENCONTRO</span><h1>O jogo fica<br />melhor <em>junto.</em></h1><p>Organize sua rotina de jogo e deixe o resto com a Resenha.</p><button class="button button-light" id="hero-action">EXPLORAR QUADRAS <span>↗</span></button></div>
+            <div class="hero-ball" aria-hidden="true"><div class="ball-shape">⬟</div><span class="ball-orbit orbit-one"></span><span class="ball-orbit orbit-two"></span><span class="hero-tag">SEU PRÓXIMO<br />JOGO COMEÇA<br /><b>AGORA.</b></span></div>
+            <div class="hero-number">01<span>/04</span></div>
+          </div>
+          <div class="welcome-row"><div><span class="eyebrow">SEU ESPAÇO</span><h2>Bem-vindo à Resenha<span class="green-dot">.</span></h2></div><span class="role-pill" id="role-pill">JOGADOR</span></div>
+          <div class="stat-grid">
+            <article class="stat-card"><div class="stat-top"><span>SEUS ESTABELECIMENTOS</span><span class="stat-symbol">⌂</span></div><strong id="stat-venues">—</strong><small>cadastrados por você</small></article>
+            <article class="stat-card stat-card-blue"><div class="stat-top"><span>QUADRAS DISPONÍVEIS</span><span class="stat-symbol">▦</span></div><strong id="stat-courts">—</strong><small>na sua rede</small></article>
+            <article class="stat-card stat-card-lime"><div class="stat-top"><span>SEU PERFIL</span><span class="stat-symbol">◎</span></div><strong id="stat-profile">—</strong><small id="stat-profile-note">jogador</small></article>
+          </div>
+          <div class="section-heading"><div><span class="eyebrow">ACESSO RÁPIDO</span><h2>O que vamos fazer?</h2></div><span class="heading-aside">ESCOLHA SEU PRÓXIMO LANCE <b>↘</b></span></div>
+          <div class="action-grid">
+            <button class="action-card action-green" data-go="quadras"><span class="action-count">01 / DONO</span><span class="action-icon">▦</span><strong>Gerencie<br />suas quadras</strong><span class="action-arrow">↗</span></button>
+            <button class="action-card action-blue" data-go="jogador"><span class="action-count">02 / JOGADOR</span><span class="action-icon">◎</span><strong>Complete seu<br />perfil de jogo</strong><span class="action-arrow">↗</span></button>
+            <button class="action-card action-dark" data-go="admin"><span class="action-count">03 / ADMIN</span><span class="action-icon">♙</span><strong>Veja o time<br />de jogadores</strong><span class="action-arrow">↗</span></button>
+          </div>
+          <footer class="main-footer"><span>JOGUE LIMPO. JOGUE JUNTO.</span><span>RESENHA <b>●</b> FUTEBOL PARA TODOS</span></footer>
+        </section>
+
+        <section id="quadras-view" class="content-view hidden">
+          <div class="page-title"><div><span class="eyebrow">ÁREA DO PROPRIETÁRIO</span><h1>Seu campo,<br /><em>suas regras.</em></h1><p>Gerencie estabelecimentos e quadras vinculados à sua conta.</p></div><button class="button button-primary" id="new-venue">+ NOVO ESTABELECIMENTO</button></div>
+          <div class="content-columns"><div class="panel venue-panel"><div class="panel-heading"><div><span class="eyebrow">SEUS ESPAÇOS</span><h2>Estabelecimentos</h2></div><button class="icon-button" id="refresh-venues" title="Atualizar">↻</button></div><div id="venues-list" class="item-list"></div></div>
+            <div class="panel court-panel"><div class="panel-heading"><div><span class="eyebrow">ESTRUTURA</span><h2>Quadras</h2></div><button class="button button-outline button-small" id="new-court">+ ADICIONAR</button></div><div id="courts-list" class="item-list"></div></div></div>
+          <footer class="main-footer"><span>RESENHA <b>●</b> DONO DE ESTABELECIMENTO</span><span>SEU JOGO, SUAS REGRAS</span></footer>
+        </section>
+
+        <section id="bookings-view" class="content-view hidden">
+          <div class="page-title"><div><span class="eyebrow">PRÓXIMA PARTIDA</span><h1>Agende<br /><em>seu jogo.</em></h1><p>Mesmo dia: mínimo de 8 horas de antecedência e criação até as 18h. Até 3 criações por dia, incluindo canceladas.</p></div></div>
+          <div class="panel"><h2>Nova partida</h2><p>Somente estabelecimentos aprovados. Cada agendamento ocupa 1 hora. Participantes e pagamentos serão disponibilizados nas próximas etapas.</p>
+            <form id="booking-form" class="form-grid">
+              <label class="wide">Quadra<select id="booking-court" name="courtId" required></select></label>
+              <div class="wide"><button id="booking-courts-prev" class="mini-button" type="button">QUADRAS ANTERIORES</button><button id="booking-courts-next" class="mini-button" type="button">MAIS QUADRAS</button></div>
+              <label>Data de abertura<input id="booking-date" type="date" required /></label>
+              <label>Horário<select id="booking-slot" name="startsAt" required></select></label>
+              <label>Visibilidade<select name="visibility"><option value="PUBLIC">Pública</option><option value="PRIVATE">Privada</option></select></label>
+              <p id="booking-court-info"></p><p id="booking-message" class="wide" role="status"></p>
+              <button id="booking-submit" class="button button-primary" type="submit">AGENDAR PARTIDA</button>
+            </form>
+          </div>
+          <div class="panel"><div class="panel-heading"><h2>Meus agendamentos</h2><button id="refresh-bookings" class="mini-button">ATUALIZAR</button></div><div id="bookings-list" class="item-list"></div><button id="bookings-prev" class="mini-button">ANTERIORES</button><button id="bookings-next" class="mini-button">PRÓXIMOS</button></div>
+        </section>
+
+        <section id="player-view" class="content-view hidden">
+          <div class="page-title"><div><span class="eyebrow">SUA FICHA DE JOGO</span><h1>Perfil de<br /><em>jogador.</em></h1><p>Conte pra gente quem vai entrar em campo.</p></div><span class="big-avatar">◎</span></div>
+          <div class="panel profile-panel"><div class="panel-heading"><div><span class="eyebrow">DADOS DO ATLETA</span><h2>Informações pessoais</h2></div><span class="role-pill">PLAYER</span></div><div id="player-profile" class="profile-content"></div><form id="player-form" class="form-grid"></form></div>
+          <footer class="main-footer"><span>RESENHA <b>●</b> SEU PERFIL DE JOGADOR</span><span>TODO MUNDO EM CAMPO</span></footer>
+        </section>
+
+        <section id="admin-view" class="content-view hidden">
+          <div class="page-title"><div><span class="eyebrow">PAINEL DE CONTROLE</span><h1>O time<br /><em>Resenha.</em></h1><p>Consulte os jogadores ativos da plataforma.</p></div><button class="button button-primary" id="refresh-players">↻ ATUALIZAR LISTA</button></div>
+          <div class="panel admin-panel"><div class="panel-heading"><div><span class="eyebrow">ELENCO ATIVO</span><h2>Jogadores</h2></div><span class="role-pill">ADMIN</span></div><div id="admin-list" class="table-wrap"></div></div>
+          <footer class="main-footer"><span>RESENHA <b>●</b> ADMINISTRAÇÃO</span><span>GESTÃO DO TIME</span></footer>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="venue-dialog" class="modal"><form id="venue-form" method="dialog"><div class="modal-head"><div><span class="eyebrow">NOVO ESPAÇO DE JOGO</span><h2>Cadastrar estabelecimento</h2></div><button class="icon-button" value="cancel" aria-label="Fechar">×</button></div><div class="form-grid"><label>Nome<input name="name" required placeholder="Ex.: Arena da Resenha" /></label><label>Descrição<input name="description" required placeholder="Conte um pouco sobre o espaço" /></label><label>Abre às<input name="openingTime" type="time" required /></label><label>Fecha às<input name="closingTime" type="time" required /></label><label>Quantidade de quadras<input name="courtCount" type="number" min="1" required placeholder="2" /></label><span class="field-spacer"></span><label>Rua<input name="street" required /></label><label>Número<input name="number" /></label><label>Bairro<input name="neighborhood" required /></label><label>Complemento<input name="complement" /></label><label>CEP<input name="zipCode" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" required placeholder="00000000" /></label><label>Cidade<input name="city" required /></label><label>Estado<input name="state" maxlength="2" required placeholder="SP" /></label></div><div class="modal-actions"><button class="button button-outline" value="cancel">CANCELAR</button><button class="button button-primary" type="submit">SALVAR ESPAÇO ↗</button></div></form></dialog>
+    <dialog id="court-dialog" class="modal modal-small"><form id="court-form" method="dialog"><div class="modal-head"><div><span class="eyebrow">ESTRUTURA DO ESPAÇO</span><h2>Adicionar quadra</h2></div><button class="icon-button" value="cancel" aria-label="Fechar">×</button></div><div class="form-stack"><label>Nome da quadra<input name="name" required placeholder="Ex.: Quadra 1" /></label><label>Tipo<select name="type"><option value="SOCIETY">Society</option><option value="CAMPO">Campo</option><option value="FUTSAL">Futsal</option><option value="VOLEI">Vôlei</option><option value="BASQUETE">Basquete</option></select></label><label>Mínimo de participantes<input name="minimumParticipants" type="number" min="1" required /></label><label>Estabelecimento<select name="venueId" required></select></label></div><div class="modal-actions"><button class="button button-outline" value="cancel">CANCELAR</button><button class="button button-primary" type="submit">SALVAR QUADRA ↗</button></div></form></dialog>
+    <dialog id="slots-dialog" class="modal"><div class="modal-head"><div><h2>Disponibilidade da quadra</h2><p>Horários de 1 hora, no fuso de São Paulo. Bloquear não cria uma reserva.</p></div><button id="close-slots" class="icon-button" aria-label="Fechar horários">×</button></div><label>Data de abertura<input id="slots-date" type="date" required /></label><div id="slots-list" class="item-list"></div></dialog>
+    <div id="toast" class="toast" role="status"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
