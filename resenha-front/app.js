@@ -1,6 +1,6 @@
-const API_BASE = localStorage.getItem('resenha-api') || 'http://localhost:8080';
+const API_BASE = localStorage.getItem('resenha-api') || 'http://localhost:8081';
 const tokenKey = 'resenha-token';
-const roleKey = 'resenha-role';
+const roleKey = 'resenha-account-role';
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -26,27 +26,39 @@ async function api(path, options = {}) {
     $('.status-dot').style.background = '#e66b57';
     throw new Error(`Não consegui conectar à API em ${API_BASE}. Confira se o backend está rodando.`);
   }
-  $('#api-status').textContent = 'conectada · localhost:8080';
+  $('#api-status').textContent = `conectada · ${new URL(API_BASE).host}`;
   $('.status-dot').style.background = '#91d444';
   const raw = await response.text();
   let data;
   try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
   if (!response.ok) {
     const detail = typeof data === 'string' ? data : data?.message || data?.error || '';
-    throw new Error(detail || `${response.status} ${response.statusText}${response.status === 403 ? ' — confira se você entrou com o perfil correto.' : ''}`);
+    throw new Error(detail || `${response.status} ${response.statusText}${response.status === 403 ? ' — sua conta não tem permissão para esta ação.' : ''}`);
   }
   return data;
+}
+
+const viewsByRole = {
+  PLAYER: ['inicio', 'jogador', 'matches', 'bookings'],
+  OWNER: ['inicio', 'quadras'],
+  ADMIN: ['inicio', 'admin']
+};
+
+function canOpen(view) {
+  return !!localStorage.getItem(tokenKey) && !!viewsByRole[localStorage.getItem(roleKey)]?.includes(view);
 }
 
 function setAuth(isAuthenticated) {
   $('#auth-screen').classList.toggle('hidden', isAuthenticated);
   $('#dashboard').classList.toggle('hidden', !isAuthenticated);
   $$('.content-view').forEach(view => view.classList.add('hidden'));
-  $$('.nav-link[data-view]').forEach(link => link.classList.toggle('hidden', !isAuthenticated || ((link.dataset.view === 'admin' && localStorage.getItem(roleKey) !== 'ADMIN') || (link.dataset.view === 'bookings' && localStorage.getItem(roleKey) !== 'PLAYER'))));
+  $$('[data-view], [data-go], [data-requires-view]').forEach(element => {
+    const view = element.dataset.view || element.dataset.go || element.dataset.requiresView;
+    element.classList.toggle('hidden', !isAuthenticated || !canOpen(view));
+  });
   $('#logout').classList.toggle('hidden', !isAuthenticated);
-  if (!isAuthenticated) {
-    $$('.nav-link[data-view]').forEach(link => link.classList.add('hidden'));
-  } else {
+  if (isAuthenticated) {
+    $$('.nav-link[data-view]').forEach(link => link.classList.toggle('active', link.dataset.view === 'inicio'));
     $('#role-pill').textContent = roleLabel(localStorage.getItem(roleKey));
     $('#avatar').textContent = localStorage.getItem('resenha-email')?.[0]?.toUpperCase() || 'R';
     $('#crumb-current').textContent = 'VISÃO GERAL';
@@ -57,18 +69,20 @@ function setAuth(isAuthenticated) {
 function roleLabel(role) { return ({ PLAYER: 'JOGADOR', OWNER: 'PROPRIETÁRIO', ADMIN: 'ADMINISTRADOR' })[role] || 'JOGADOR'; }
 
 function showView(name) {
+  if (!canOpen(name)) return;
   $('#dashboard').classList.toggle('hidden', name !== 'inicio');
   $$('.content-view').forEach(view => view.classList.toggle('hidden', view.id !== `${name}-view` && view.id !== `${name}as-view`));
   if (name === 'quadras') $('#quadras-view').classList.remove('hidden');
   if (name === 'jogador') $('#player-view').classList.remove('hidden');
   if (name === 'admin') $('#admin-view').classList.remove('hidden');
-  const titles = { inicio: 'VISÃO GERAL', quadras: 'MINHAS QUADRAS', jogador: 'PERFIL DE JOGADOR', admin: 'JOGADORES', bookings: 'AGENDAMENTOS' };
+  const titles = { inicio: 'VISÃO GERAL', quadras: 'MINHAS QUADRAS', jogador: 'PERFIL DE JOGADOR', admin: 'JOGADORES', bookings: 'AGENDAMENTOS', matches: 'PARTIDAS' };
   $('#crumb-current').textContent = titles[name] || 'VISÃO GERAL';
   $$('.nav-link[data-view]').forEach(link => link.classList.toggle('active', link.dataset.view === name));
   if (name === 'quadras') loadOwnerData();
   if (name === 'jogador') loadPlayer();
   if (name === 'admin') loadPlayers();
   if (name === 'bookings') loadBookingView();
+  if (name === 'matches') loadMatchView();
 }
 
 async function loadOverview() {
@@ -107,10 +121,11 @@ $('#login-form').addEventListener('submit', async event => {
   try {
     const result = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email: form.get('email'), password: form.get('password') }) });
     localStorage.setItem(tokenKey, result.token);
-    localStorage.setItem(roleKey, form.get('role'));
+    localStorage.setItem(roleKey, result.role);
     localStorage.setItem('resenha-email', form.get('email'));
     setAuth(true);
     notify('Boa! Você entrou na Resenha.');
+    if (localStorage.getItem(roleKey) === 'PLAYER' && location.hash.startsWith('#invite=')) showView('matches');
   } catch (error) { message.textContent = error.message; }
 });
 
@@ -123,7 +138,6 @@ $('#register-form').addEventListener('submit', async event => {
     await api('/auth/register', { method: 'POST', body: JSON.stringify({ email: form.get('email'), password: form.get('password'), role: form.get('role') }) });
     $('#login-form [name="email"]').value = form.get('email');
     $('#login-form [name="password"]').value = form.get('password');
-    $('#login-form [name="role"]').value = form.get('role');
     message.className = 'auth-message success'; message.textContent = 'Conta criada! Entre com os mesmos dados para continuar.';
     $$('.auth-tab').forEach(tab => tab.classList.toggle('selected', tab.dataset.auth === 'login'));
     $('#login-panel').classList.remove('hidden'); $('#register-panel').classList.add('hidden');
@@ -140,8 +154,7 @@ $$('.auth-tab').forEach(tab => tab.addEventListener('click', () => {
 
 $$('.nav-link[data-view]').forEach(link => link.addEventListener('click', () => showView(link.dataset.view)));
 $$('[data-go]').forEach(button => button.addEventListener('click', () => showView(button.dataset.go)));
-$('#hero-action').addEventListener('click', () => showView('quadras'));
-$('#logout').addEventListener('click', () => { localStorage.removeItem(tokenKey); setAuth(false); notify('Você saiu da conta.'); });
+$('#logout').addEventListener('click', () => { localStorage.removeItem(tokenKey); localStorage.removeItem(roleKey); setAuth(false); notify('Você saiu da conta.'); });
 
 function formatAddress(address) {
   if (!address) return '';
@@ -303,7 +316,8 @@ async function loadPlayers() {
 
 $('#refresh-players').addEventListener('click', loadPlayers);
 $$('[data-auth]').forEach(tab => tab.addEventListener('keydown', event => { if (event.key === 'Enter') tab.click(); }));
-setAuth(!!localStorage.getItem(tokenKey));
+if (!canOpen('inicio')) localStorage.removeItem(tokenKey);
+setAuth(canOpen('inicio'));
 
 
 function editCourt(id) {
@@ -399,7 +413,8 @@ async function loadBookingSlots() {
 async function loadBookingHistory() {
   try {
     const page = await api(`/bookings?page=${bookingHistoryPage}`);
-    $('#bookings-list').innerHTML = page.content.length ? page.content.map(item => `<article class="list-item"><div><h3>Agendamento #${item.id} · ${escapeHtml(sportLabel(item.sport))}</h3><p>${escapeHtml(item.startsAt.replace('T', ' '))} – ${escapeHtml(item.endsAt.replace('T', ' '))}<br>${item.visibility === 'PRIVATE' ? 'Privada' : 'Pública'} · ${item.status === 'OPEN' ? 'Aberta' : 'Cancelada'} · Mínimo ${item.minimumParticipants} participantes</p></div></article>`).join('') : '<p>Você ainda não criou agendamentos.</p>';
+    $('#bookings-list').innerHTML = page.content.length ? page.content.map(item => `<article class="list-item"><div><h3>Agendamento #${item.id} · ${escapeHtml(sportLabel(item.sport))}</h3><p>${escapeHtml(item.startsAt.replace('T', ' '))} – ${escapeHtml(item.endsAt.replace('T', ' '))}<br>${item.visibility === 'PRIVATE' ? 'Privada' : 'Pública'} · ${item.status === 'PENDING_PAYMENT' ? 'Pagamento pendente' : item.status === 'OPEN' ? 'Aberta' : 'Cancelada'} · Mínimo ${item.minimumParticipants} participantes</p>${item.paymentDue != null ? `<p>Pagamento simulado: ${currency.format(item.paymentAmount)} de ${currency.format(item.paymentDue)}</p>` : ''}</div>${item.status === 'OPEN' ? `<button class="mini-button" data-manage-match="${item.id}">GERENCIAR PARTICIPAÇÃO</button>` : ''}</article>`).join('') : '<p>Você ainda não criou agendamentos.</p>';
+    $$('[data-manage-match]').forEach(button => button.addEventListener('click', async () => { showView('matches'); await manageMatch(button.dataset.manageMatch); }));
     $('#bookings-prev').disabled = page.first;
     $('#bookings-next').disabled = page.last;
   } catch (error) { errorMessage(error, $('#bookings-list')); }
@@ -411,20 +426,161 @@ $('#booking-courts-next').addEventListener('click', () => { bookingCourtPage++; 
 $('#bookings-prev').addEventListener('click', () => { bookingHistoryPage--; loadBookingHistory(); });
 $('#bookings-next').addEventListener('click', () => { bookingHistoryPage++; loadBookingHistory(); });
 $('#refresh-bookings').addEventListener('click', loadBookingHistory);
+const paymentDialog = $('#payment-dialog');
+const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+let bookingDraft;
+let sendingPayment = false;
+
 $('#booking-form').addEventListener('submit', async event => {
   event.preventDefault();
   const court = bookingCourts.find(c => String(c.id) === $('#booking-court').value);
-  if (!court) return;
-  $('#booking-submit').disabled = true;
+  if (!court || paymentDialog.open) return;
+  const draft = { courtId: court.id, startsAt: $('#booking-slot').value, sport: court.sport,
+    visibility: new FormData(event.currentTarget).get('visibility') };
+  bookingDraft = draft;
+  $('#payment-form').reset();
+  $('#payment-error').textContent = '';
+  $('#payment-price').textContent = 'Consultando valor…';
+  $('#submit-payment').disabled = true;
+  paymentDialog.showModal();
   try {
-    const result = await api('/bookings', { method: 'POST', body: JSON.stringify({ courtId: court.id,
-      startsAt: $('#booking-slot').value, sport: court.sport, visibility: new FormData(event.currentTarget).get('visibility') }) });
-    notify(`Agendamento #${result.id} criado. Partida aberta!`);
+    const price = await api('/bookings/simulated-price');
+    if (bookingDraft !== draft) return;
+    $('#payment-price').textContent = 'Valor do agendamento: ' + currency.format(price);
+    $('#submit-payment').disabled = false;
+  } catch (error) { if (bookingDraft === draft) $('#payment-error').textContent = error.message; }
+});
+$('#cancel-payment').addEventListener('click', () => paymentDialog.close());
+paymentDialog.addEventListener('cancel', event => { if (sendingPayment) event.preventDefault(); });
+paymentDialog.addEventListener('close', () => { bookingDraft = null; });
+window.addEventListener('pagehide', () => { if (paymentDialog.open) paymentDialog.close(); });
+
+$('#payment-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!bookingDraft || sendingPayment || $('#submit-payment').disabled) return;
+  const form = new FormData(event.currentTarget);
+  sendingPayment = true;
+  $('#submit-payment').disabled = true;
+  $('#cancel-payment').disabled = true;
+  try {
+    const result = await api('/bookings', { method: 'POST', body: JSON.stringify({ ...bookingDraft,
+      paymentMethod: form.get('paymentMethod'), paymentAmount: form.get('paymentAmount') }) });
+    paymentDialog.close();
+    notify(result.status === 'PENDING_PAYMENT' ? 'Agendamento pendente de pagamento.' : 'Pagamento simulado. Partida aberta!');
     bookingHistoryPage = 0;
     await Promise.all([loadBookingHistory(), loadBookingSlots()]);
   } catch (error) {
-    // Refresh conflicts without automatically retrying the creation.
+    $('#payment-error').textContent = error.message;
     await loadBookingSlots();
-    $('#booking-message').textContent = error.message;
+  } finally {
+    sendingPayment = false;
+    $('#submit-payment').disabled = false;
+    $('#cancel-payment').disabled = false;
   }
 });
+
+
+let matchesPage = 0, requestsPage = 0, participationPage = 0, selectedMatchId = null, activeInvitation = null;
+const participationLabel = status => ({ REQUESTED: 'Aguardando aprovação', PENDING_PAYMENT: 'Aguardando pagamento — vaga não garantida', REJECTED: 'Solicitação rejeitada', CONFIRMED: 'Participação confirmada' })[status] || status;
+async function loadMatchView() {
+  if (localStorage.getItem(roleKey) !== 'PLAYER') return;
+  matchesPage = 0; participationPage = 0;
+  $('#match-manage').classList.add('hidden'); $('#match-participants').classList.add('hidden');
+  await Promise.all([loadMatches(), loadMyParticipations()]);
+  if (location.hash.startsWith('#invite=')) {
+    try { $('#invitation-code').value = decodeURIComponent(location.hash.slice(8)); await resolveInvitation(); }
+    catch (error) { $('#match-message').textContent = error.message; }
+  }
+}
+function renderMatches(matches) {
+  $('#matches-list').innerHTML = matches.length ? matches.map(match => `<article class="list-item match-card" data-match-id="${match.id}"><div><h3>${escapeHtml(match.venueName)} · ${escapeHtml(sportLabel(match.sport))}</h3><p>${escapeHtml(match.courtName)} · ${escapeHtml(match.city)}<br>${escapeHtml(match.startsAt.replace('T', ' '))} · ${match.visibility === 'PRIVATE' ? 'Privada — identidades ocultas' : 'Pública'}<br>${match.participantCount} participante(s) confirmado(s) · Mínimo ${match.minimumParticipants}</p>${match.myParticipationStatus ? `<p>${escapeHtml(participationLabel(match.myParticipationStatus))}</p>` : ''}</div><div class="list-actions">${!match.myParticipationStatus && match.joinable ? `<button class="mini-button" data-join-match="${match.id}">${match.visibility === 'PRIVATE' && !match.createdByMe ? 'SOLICITAR ACESSO' : 'PARTICIPAR'}</button>` : ''}${match.createdByMe ? `<button class="mini-button" data-manage-list-match="${match.id}">GERENCIAR</button>` : ''}${match.visibility === 'PUBLIC' || match.createdByMe ? `<button class="mini-button" data-participants-match="${match.id}">PARTICIPANTES</button>` : ''}${!match.joinable ? '<span>Entradas encerradas</span>' : ''}</div></article>`).join('') : '<p>Nenhuma partida encontrada.</p>';
+  $$('[data-join-match]').forEach(button => button.addEventListener('click', () => joinMatch(button.dataset.joinMatch, button)));
+  $$('[data-manage-list-match]').forEach(button => button.addEventListener('click', () => manageMatch(button.dataset.manageListMatch)));
+  $$('[data-participants-match]').forEach(button => button.addEventListener('click', () => loadMatchParticipants(button.dataset.participantsMatch)));
+}
+async function loadMatches() {
+  activeInvitation = null;
+  const query = new URLSearchParams();
+  for (const [key, value] of new FormData($('#match-filters'))) if (value) query.set(key, value);
+  query.set('page', matchesPage);
+  try {
+    const page = await api(`/matches?${query}`);
+    renderMatches(page.content);
+    $('#matches-prev').disabled = page.first; $('#matches-next').disabled = page.last;
+  } catch (error) { errorMessage(error, $('#matches-list')); }
+}
+async function joinMatch(id, button) {
+  button.disabled = true;
+  try {
+    const body = activeInvitation && String(activeInvitation.id) === String(id) ? { invitationCode: activeInvitation.code } : {};
+    const result = await api(`/matches/${id}/participations`, { method: 'POST', body: JSON.stringify(body) });
+    $('#match-message').textContent = participationLabel(result.status);
+    await Promise.all([loadMatches(), loadMyParticipations()]);
+  } catch (error) { button.disabled = false; $('#match-message').textContent = error.message; }
+}
+async function manageMatch(id) {
+  selectedMatchId = id; requestsPage = 0;
+  $('#match-manage').classList.remove('hidden'); $('#match-manage-title').textContent = `Gerenciar partida #${id}`;
+  $('#match-invitation-link').value = '';
+  try {
+    const match = await api(`/matches/${id}`);
+    $('#generate-invitation').disabled = !match.joinable || match.visibility !== 'PRIVATE';
+    await loadMatchRequests();
+  } catch (error) { errorMessage(error, $('#match-requests')); }
+}
+async function loadMatchRequests() {
+  try {
+    const page = await api(`/matches/${selectedMatchId}/requests?page=${requestsPage}`);
+    $('#match-requests').innerHTML = page.content.length ? page.content.map(item => `<article class="list-item"><div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(participationLabel(item.status))}</p></div>${item.status === 'REQUESTED' ? `<div class="list-actions"><button class="mini-button" data-decide-request="${item.id}" data-approved="true">APROVAR</button><button class="mini-button danger" data-decide-request="${item.id}" data-approved="false">REJEITAR</button></div>` : ''}</article>`).join('') : '<p>Nenhuma solicitação.</p>';
+    $('#requests-prev').disabled = page.first; $('#requests-next').disabled = page.last;
+    $$('[data-decide-request]').forEach(button => button.addEventListener('click', async () => {
+      button.disabled = true;
+      try {
+        await api(`/matches/${selectedMatchId}/requests/${button.dataset.decideRequest}`, { method: 'PATCH', body: JSON.stringify({ approved: button.dataset.approved === 'true' }) });
+        await loadMatchRequests();
+      } catch (error) { button.disabled = false; $('#match-message').textContent = error.message; }
+    }));
+  } catch (error) { errorMessage(error, $('#match-requests')); }
+}
+async function loadMyParticipations() {
+  try {
+    const page = await api(`/participations/me?page=${participationPage}`);
+    $('#participations-list').innerHTML = page.content.length ? page.content.map(item => `<article class="list-item"><div><h3>Partida #${item.matchId}</h3><p>${escapeHtml(participationLabel(item.status))}</p></div></article>`).join('') : '<p>Você ainda não solicitou participação.</p>';
+    $('#participations-prev').disabled = page.first; $('#participations-next').disabled = page.last;
+  } catch (error) { errorMessage(error, $('#participations-list')); }
+}
+async function loadMatchParticipants(id, pageNumber = 0) {
+  $('#match-participants').classList.remove('hidden');
+  try {
+    const page = await api(`/matches/${id}/participants?page=${pageNumber}`);
+    $('#match-participants').innerHTML = `<h2>Participantes confirmados (${page.totalElements})</h2><p>${page.content.map(item => escapeHtml(item.name)).join(', ') || 'Nenhum participante confirmado por pagamento.'}</p><button id="confirmed-prev" class="mini-button" ${page.first ? 'disabled' : ''}>ANTERIORES</button><button id="confirmed-next" class="mini-button" ${page.last ? 'disabled' : ''}>PRÓXIMOS</button>`;
+    $('#confirmed-prev').addEventListener('click', () => loadMatchParticipants(id, pageNumber - 1));
+    $('#confirmed-next').addEventListener('click', () => loadMatchParticipants(id, pageNumber + 1));
+  } catch (error) { errorMessage(error, $('#match-participants')); }
+}
+async function resolveInvitation() {
+  let code = $('#invitation-code').value.trim();
+  if (code.includes('#invite=')) code = decodeURIComponent(code.split('#invite=')[1]);
+  try {
+    const match = await api('/match-invitations/resolve', { method: 'POST', body: JSON.stringify({ code }) });
+    activeInvitation = { id: match.id, code }; renderMatches([match]);
+    $('#matches-prev').disabled = true; $('#matches-next').disabled = true;
+    $('#match-message').textContent = 'Convite localizado. Solicite acesso para o criador aprovar.';
+  } catch (error) { $('#match-message').textContent = error.message; }
+}
+$('#match-filters').addEventListener('submit', event => { event.preventDefault(); matchesPage = 0; loadMatches(); });
+$('#matches-prev').addEventListener('click', () => { matchesPage--; loadMatches(); });
+$('#matches-next').addEventListener('click', () => { matchesPage++; loadMatches(); });
+$('#requests-prev').addEventListener('click', () => { requestsPage--; loadMatchRequests(); });
+$('#requests-next').addEventListener('click', () => { requestsPage++; loadMatchRequests(); });
+$('#participations-prev').addEventListener('click', () => { participationPage--; loadMyParticipations(); });
+$('#participations-next').addEventListener('click', () => { participationPage++; loadMyParticipations(); });
+$('#refresh-participations').addEventListener('click', loadMyParticipations);
+$('#invitation-form').addEventListener('submit', event => { event.preventDefault(); resolveInvitation(); });
+$('#generate-invitation').addEventListener('click', async () => {
+  try {
+    const invitation = await api(`/matches/${selectedMatchId}/invitation`, { method: 'POST' });
+    $('#match-invitation-link').value = `${location.origin}${location.pathname}#invite=${encodeURIComponent(invitation.code)}`;
+  } catch (error) { $('#match-message').textContent = error.message; }
+});
+if (localStorage.getItem(roleKey) === 'PLAYER' && localStorage.getItem(tokenKey) && location.hash.startsWith('#invite=')) showView('matches');

@@ -21,6 +21,7 @@
         <nav class="main-nav" aria-label="Navegação principal">
           <button class="nav-link active" data-view="inicio"><span class="nav-icon">◈</span> Visão geral</button>
           <button class="nav-link" data-view="quadras"><span class="nav-icon">▦</span> Minhas quadras</button>
+          <button class="nav-link" data-view="matches"><span class="nav-icon">⚽</span> Partidas</button>
           <button class="nav-link" data-view="bookings"><span class="nav-icon">◷</span> Agendamentos</button>
           <button class="nav-link" data-view="jogador"><span class="nav-icon">◎</span> Perfil de jogador</button>
           <button class="nav-link admin-only hidden" data-view="admin"><span class="nav-icon">♙</span> Jogadores</button>
@@ -52,7 +53,6 @@
               <form id="login-form" class="form-stack">
                 <label>E-mail<input name="email" type="email" placeholder="voce@email.com" required autocomplete="email" /></label>
                 <label>Senha<input name="password" type="password" placeholder="Sua senha" required autocomplete="current-password" /></label>
-                <label>Entrar como<select name="role"><option value="PLAYER">Jogador</option><option value="OWNER">Dono de estabelecimento</option><option value="ADMIN">Administrador</option></select></label>
                 <button class="button button-primary full" type="submit">ENTRAR NA RESENHA <span>↗</span></button>
               </form>
             </div>
@@ -61,7 +61,7 @@
               <form id="register-form" class="form-stack">
                 <label>E-mail<input name="email" type="email" placeholder="voce@email.com" required autocomplete="email" /></label>
                 <label>Senha<input name="password" type="password" minlength="6" placeholder="Mínimo de 6 caracteres" required autocomplete="new-password" /></label>
-                <label>Quero entrar como<select name="role"><option value="PLAYER">Jogador</option><option value="OWNER">Dono de estabelecimento</option><option value="ADMIN">Administrador</option></select></label>
+                <label>Quero entrar como<select name="role"><option value="PLAYER">Jogador</option><option value="OWNER">Dono de estabelecimento</option></select></label>
                 <button class="button button-primary full" type="submit">CRIAR CONTA <span>↗</span></button>
               </form>
               <p class="form-note">O cadastro cria sua conta de acesso. O perfil de jogador pode ser completado depois.</p>
@@ -72,20 +72,21 @@
 
         <section id="dashboard" class="dashboard hidden">
           <div class="hero-banner">
-            <div class="hero-copy"><span class="eyebrow">QUARTA-FEIRA · FUTEBOL É ENCONTRO</span><h1>O jogo fica<br />melhor <em>junto.</em></h1><p>Organize sua rotina de jogo e deixe o resto com a Resenha.</p><button class="button button-light" id="hero-action">EXPLORAR QUADRAS <span>↗</span></button></div>
+            <div class="hero-copy"><span class="eyebrow">QUARTA-FEIRA · FUTEBOL É ENCONTRO</span><h1>O jogo fica<br />melhor <em>junto.</em></h1><p>Organize sua rotina de jogo e deixe o resto com a Resenha.</p><button class="button button-light" id="hero-action" data-go="bookings">EXPLORAR QUADRAS <span>↗</span></button></div>
             <div class="hero-ball" aria-hidden="true"><div class="ball-shape">⬟</div><span class="ball-orbit orbit-one"></span><span class="ball-orbit orbit-two"></span><span class="hero-tag">SEU PRÓXIMO<br />JOGO COMEÇA<br /><b>AGORA.</b></span></div>
             <div class="hero-number">01<span>/04</span></div>
           </div>
           <div class="welcome-row"><div><span class="eyebrow">SEU ESPAÇO</span><h2>Bem-vindo à Resenha<span class="green-dot">.</span></h2></div><span class="role-pill" id="role-pill">JOGADOR</span></div>
           <div class="stat-grid">
-            <article class="stat-card"><div class="stat-top"><span>SEUS ESTABELECIMENTOS</span><span class="stat-symbol">⌂</span></div><strong id="stat-venues">—</strong><small>cadastrados por você</small></article>
-            <article class="stat-card stat-card-blue"><div class="stat-top"><span>QUADRAS DISPONÍVEIS</span><span class="stat-symbol">▦</span></div><strong id="stat-courts">—</strong><small>na sua rede</small></article>
+            <article class="stat-card" data-requires-view="quadras"><div class="stat-top"><span>SEUS ESTABELECIMENTOS</span><span class="stat-symbol">⌂</span></div><strong id="stat-venues">—</strong><small>cadastrados por você</small></article>
+            <article class="stat-card stat-card-blue" data-requires-view="quadras"><div class="stat-top"><span>QUADRAS DISPONÍVEIS</span><span class="stat-symbol">▦</span></div><strong id="stat-courts">—</strong><small>na sua rede</small></article>
             <article class="stat-card stat-card-lime"><div class="stat-top"><span>SEU PERFIL</span><span class="stat-symbol">◎</span></div><strong id="stat-profile">—</strong><small id="stat-profile-note">jogador</small></article>
           </div>
           <div class="section-heading"><div><span class="eyebrow">ACESSO RÁPIDO</span><h2>O que vamos fazer?</h2></div><span class="heading-aside">ESCOLHA SEU PRÓXIMO LANCE <b>↘</b></span></div>
           <div class="action-grid">
             <button class="action-card action-green" data-go="quadras"><span class="action-count">01 / DONO</span><span class="action-icon">▦</span><strong>Gerencie<br />suas quadras</strong><span class="action-arrow">↗</span></button>
             <button class="action-card action-blue" data-go="jogador"><span class="action-count">02 / JOGADOR</span><span class="action-icon">◎</span><strong>Complete seu<br />perfil de jogo</strong><span class="action-arrow">↗</span></button>
+            <button class="action-card action-green" data-go="matches"><strong>Ver partidas</strong><span class="action-arrow">↗</span></button>
             <button class="action-card action-dark" data-go="admin"><span class="action-count">03 / ADMIN</span><span class="action-icon">♙</span><strong>Veja o time<br />de jogadores</strong><span class="action-arrow">↗</span></button>
           </div>
           <footer class="main-footer"><span>JOGUE LIMPO. JOGUE JUNTO.</span><span>RESENHA <b>●</b> FUTEBOL PARA TODOS</span></footer>
@@ -96,6 +97,19 @@
           <div class="content-columns"><div class="panel venue-panel"><div class="panel-heading"><div><span class="eyebrow">SEUS ESPAÇOS</span><h2>Estabelecimentos</h2></div><button class="icon-button" id="refresh-venues" title="Atualizar">↻</button></div><div id="venues-list" class="item-list"></div></div>
             <div class="panel court-panel"><div class="panel-heading"><div><span class="eyebrow">ESTRUTURA</span><h2>Quadras</h2></div><button class="button button-outline button-small" id="new-court">+ ADICIONAR</button></div><div id="courts-list" class="item-list"></div></div></div>
           <footer class="main-footer"><span>RESENHA <b>●</b> DONO DE ESTABELECIMENTO</span><span>SEU JOGO, SUAS REGRAS</span></footer>
+        </section>
+
+        <section id="matches-view" class="content-view hidden">
+          <div class="page-title"><div><span class="eyebrow">ENCONTRE SEU JOGO</span><h1>Partidas<br /><em>com a galera.</em></h1><p>Solicite participação. Aprovação e solicitação não garantem vaga: a confirmação depende do pagamento.</p></div></div>
+          <div class="panel"><form id="match-filters" class="form-grid">
+            <label>Data<input type="date" name="date" /></label><label>Horário<input type="time" name="time" /></label>
+            <label>Esporte<select name="sport"><option value="">Todos</option><option value="SOCIETY">Society</option><option value="CAMPO">Futebol</option><option value="FUTSAL">Futsal</option><option value="VOLEI">Vôlei</option><option value="BASQUETE">Basquete</option></select></label>
+            <label>Cidade<input name="city" maxlength="100" /></label><button type="submit" class="button button-primary">BUSCAR PARTIDAS</button>
+          </form><p id="match-message" role="status"></p><div id="matches-list" class="item-list"></div><button id="matches-prev" class="mini-button">ANTERIORES</button><button id="matches-next" class="mini-button">PRÓXIMAS</button></div>
+          <div class="panel"><h2>Recebeu um convite?</h2><p>O código permite encontrar a partida privada. O criador ainda precisa aprovar sua solicitação.</p><form id="invitation-form" class="form-grid"><label class="wide">Código ou link do convite<input id="invitation-code" name="code" required maxlength="2048" /></label><button class="button button-outline" type="submit">ABRIR CONVITE</button></form></div>
+          <div id="match-manage" class="panel hidden"><h2 id="match-manage-title">Gerenciar partida</h2><p>Solicitações aprovadas aguardam pagamento. Solicitações e decisões encerram 1 hora antes do início.</p><button id="generate-invitation" class="button button-outline">GERAR / RENOVAR CONVITE</button><p>Renovar invalida o código anterior.</p><label>Link para compartilhar<input id="match-invitation-link" readonly /></label><div id="match-requests" class="item-list"></div><button id="requests-prev" class="mini-button">ANTERIORES</button><button id="requests-next" class="mini-button">PRÓXIMAS</button></div>
+          <div id="match-participants" class="panel hidden"></div>
+          <div class="panel"><div class="panel-heading"><h2>Minhas solicitações</h2><button id="refresh-participations" class="mini-button">ATUALIZAR</button></div><div id="participations-list" class="item-list"></div><button id="participations-prev" class="mini-button">ANTERIORES</button><button id="participations-next" class="mini-button">PRÓXIMAS</button></div>
         </section>
 
         <section id="bookings-view" class="content-view hidden">
@@ -128,6 +142,23 @@
       </main>
     </div>
 
+    <dialog id="payment-dialog" class="modal modal-small" aria-labelledby="payment-title">
+      <form id="payment-form">
+        <div class="modal-head"><h2 id="payment-title">Pagamento simulado</h2></div>
+        <p id="payment-price"></p>
+        <div class="form-stack">
+          <label>Forma de pagamento<select name="paymentMethod" required>
+            <option value="">Selecione</option><option value="PIX">Pix</option>
+            <option value="CREDIT_CARD">Cartão de crédito</option><option value="DEBIT_CARD">Cartão de débito</option>
+          </select></label>
+          <label>Valor a simular (R$)<input name="paymentAmount" type="number" min="0.01" max="99999999.99" step="0.01" required /></label>
+        </div>
+        <p>Um valor abaixo do total deixa o agendamento pendente. Se sair antes de prosseguir, o horário continua livre.</p>
+        <p id="payment-error" role="alert"></p>
+        <div class="modal-actions"><button type="button" class="button button-outline" id="cancel-payment">Cancelar</button>
+          <button class="button button-primary" id="submit-payment">Simular pagamento</button></div>
+      </form>
+    </dialog>
     <dialog id="venue-dialog" class="modal"><form id="venue-form" method="dialog"><div class="modal-head"><div><span class="eyebrow">NOVO ESPAÇO DE JOGO</span><h2>Cadastrar estabelecimento</h2></div><button class="icon-button" value="cancel" aria-label="Fechar">×</button></div><div class="form-grid"><label>Nome<input name="name" required placeholder="Ex.: Arena da Resenha" /></label><label>Descrição<input name="description" required placeholder="Conte um pouco sobre o espaço" /></label><label>Abre às<input name="openingTime" type="time" required /></label><label>Fecha às<input name="closingTime" type="time" required /></label><label>Quantidade de quadras<input name="courtCount" type="number" min="1" required placeholder="2" /></label><span class="field-spacer"></span><label>Rua<input name="street" required /></label><label>Número<input name="number" /></label><label>Bairro<input name="neighborhood" required /></label><label>Complemento<input name="complement" /></label><label>CEP<input name="zipCode" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" required placeholder="00000000" /></label><label>Cidade<input name="city" required /></label><label>Estado<input name="state" maxlength="2" required placeholder="SP" /></label></div><div class="modal-actions"><button class="button button-outline" value="cancel">CANCELAR</button><button class="button button-primary" type="submit">SALVAR ESPAÇO ↗</button></div></form></dialog>
     <dialog id="court-dialog" class="modal modal-small"><form id="court-form" method="dialog"><div class="modal-head"><div><span class="eyebrow">ESTRUTURA DO ESPAÇO</span><h2>Adicionar quadra</h2></div><button class="icon-button" value="cancel" aria-label="Fechar">×</button></div><div class="form-stack"><label>Nome da quadra<input name="name" required placeholder="Ex.: Quadra 1" /></label><label>Tipo<select name="type"><option value="SOCIETY">Society</option><option value="CAMPO">Campo</option><option value="FUTSAL">Futsal</option><option value="VOLEI">Vôlei</option><option value="BASQUETE">Basquete</option></select></label><label>Mínimo de participantes<input name="minimumParticipants" type="number" min="1" required /></label><label>Estabelecimento<select name="venueId" required></select></label></div><div class="modal-actions"><button class="button button-outline" value="cancel">CANCELAR</button><button class="button button-primary" type="submit">SALVAR QUADRA ↗</button></div></form></dialog>
     <dialog id="slots-dialog" class="modal"><div class="modal-head"><div><h2>Disponibilidade da quadra</h2><p>Horários de 1 hora, no fuso de São Paulo. Bloquear não cria uma reserva.</p></div><button id="close-slots" class="icon-button" aria-label="Fechar horários">×</button></div><label>Data de abertura<input id="slots-date" type="date" required /></label><div id="slots-list" class="item-list"></div></dialog>

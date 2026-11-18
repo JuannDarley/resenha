@@ -4,13 +4,13 @@ Interface web independente para testar o backend Resenha. É estática, sem etap
 
 ## Executar
 
-1. Inicie o backend Spring Boot na porta `8080` e o PostgreSQL.
-2. Dentro desta pasta, rode um servidor estático na porta `5500`, por exemplo: `python3 -m http.server 5500`.
-3. Acesse `http://localhost:5500`.
+1. Inicie o backend Spring Boot na porta `8081` e o PostgreSQL.
+2. Dentro desta pasta, rode um servidor estático na porta `5510`, por exemplo: `python3 -m http.server 5510`.
+3. Acesse `http://localhost:5510`.
 
-A origem `localhost:5500` já está permitida pelo CORS configurado no backend. A URL da API padrão é `http://localhost:8080`; é possível alterá-la no console do navegador com `localStorage.setItem('resenha-api', 'http://localhost:8080')`.
+A origem `localhost:5510` já está permitida pelo CORS configurado no backend. A URL da API padrão é `http://localhost:8081`; é possível alterá-la no console do navegador com `localStorage.setItem('resenha-api', 'http://localhost:8081')`.
 
-As sessões e o perfil escolhido no login ficam no `localStorage` do navegador. Como a resposta de login do backend contém apenas o token, a interface pede que o usuário selecione o perfil (jogador, proprietário ou administrador). O perfil precisa corresponder à função realmente atribuída à conta.
+O login retorna o token e o papel da conta autenticada. A interface guarda ambos no `localStorage` para restaurar a sessão e exibe os menus e atalhos correspondentes a jogador, proprietário ou administrador.
 
 ## O que a interface cobre
 
@@ -30,3 +30,7 @@ O funcionamento diário vem dos horários de abertura/fechamento do estabelecime
 ## Agendamentos
 
 A área Agendamentos, para PLAYER, lista quadras aprovadas/configuradas e permite selecionar slot e visibilidade, criar uma partida aberta e consultar o próprio histórico. O backend valida RN01, limite de 3 criações/dia e conflitos. Horários reservados são identificados na área do proprietário sem opção de liberação manual. Não há ainda participação, pagamento ou cancelamento voluntário.
+
+## Partidas, solicitações e convites
+
+A área Partidas permite filtrar por data, horário, esporte e cidade, solicitar entrada e consultar seu estado. Criadores gerenciam solicitações e geram/renovam convites privados pelo botão GERENCIAR PARTICIPAÇÃO no próprio histórico. Um código/link localiza a partida privada, mas não dispensa aprovação. Aprovação e entrada pública ficam aguardando pagamento, sem vaga garantida. A lista privada não mostra nomes dos participantes.
