@@ -16,9 +16,9 @@ Para executar também a interface:
 mvn -Pbrowser-e2e test
 ```
 
-Requisitos adicionais: Python 3, Orca aberto com CLI disponível e porta 5500 livre. O frontend deve estar em `../resenha-front`, ou ser indicado com `-Dresenha.frontend=/caminho/resenha-front`. A interface fica em outro repositório; os testes não copiam nem alteram seus arquivos.
+Requisitos adicionais: Python 3, Orca aberto com CLI disponível e porta 5510 livre. O frontend deve estar em `../resenha-front`, ou ser indicado com `-Dresenha.frontend=/caminho/resenha-front`. A interface fica em outro repositório; os testes não copiam nem alteram seus arquivos.
 
-O teste inicia o servidor estático, usa a API em porta aleatória com PostgreSQL temporário e abre uma aba própria no navegador do Orca. Essa aba usa o armazenamento da origem `http://127.0.0.1:5500`: a sessão local dessa origem é limpa no início e no fim. O teste fecha a aba e o servidor ao terminar. Não use essa origem para outra sessão durante a execução.
+O teste inicia o servidor estático, usa a API em porta aleatória com PostgreSQL temporário e abre uma aba própria no navegador do Orca. Essa aba usa o armazenamento da origem `http://127.0.0.1:5510`: a sessão local dessa origem é limpa no início e no fim. O teste fecha a aba e o servidor ao terminar. Não use essa origem para outra sessão durante a execução.
 
 ## Cobertura por fluxo implementado
 
@@ -60,7 +60,7 @@ Detalhes e contratos: [QUADRAS-E-DISPONIBILIDADE.md](QUADRAS-E-DISPONIBILIDADE.m
 
 Aprovação/rejeição ainda não têm tela no frontend: sua cobertura completa está na API. O E2E da interface não verifica aprovação, exclusões com confirmação, layout visual ou acessibilidade. Não há meta de cobertura de linhas nem alegação de cobrir todas as combinações possíveis.
 
-Criação de agendamentos com dados iniciais da partida, RN01, cota diária, conflitos e disponibilidade têm cobertura. Participantes, pagamentos e o ciclo de confirmação/cancelamento automático continuam fora do escopo implementado. O segredo JWT permanece no código conforme a decisão atual do projeto.
+Criação de agendamentos com dados iniciais da partida, RN01, cota diária, conflitos e disponibilidade têm cobertura. Solicitações públicas/privadas, aprovação, convites e privacidade agora têm cobertura; pagamentos e o ciclo de confirmação/cancelamento automático continuam fora do escopo implementado. O segredo JWT permanece no código conforme a decisão atual do projeto.
 
 ## Regressões adicionais de disponibilidade
 
@@ -73,3 +73,27 @@ Esses casos estão em `ApiIntegrationTest` (quatro testes HTTP/banco) e `CourtAv
 As regras de criação ficam em `validation/booking`, com testes unitários no pacote correspondente. `BookingIntegrationTest` usa HTTP/JWT reais, PostgreSQL e relógio fixo, cobrindo RN01, cota por criação (incluindo canceladas), reinício da cota à meia-noite, aprovação, configuração, modalidade, grade, bloqueios, histórico e privacidade. Os testes concorrentes sincronizam as tentativas e verificam reservas duplicadas, cota em quadras diferentes e disputa com bloqueio manual. A constraint de sobreposição do PostgreSQL também é exercitada diretamente.
 
 O E2E cria um agendamento privado pela interface, verifica persistência após recarga, retirada do slot livre e visualização de RESERVADO pelo proprietário sem ação de liberação. Contratos, organização e limites em [AGENDAMENTOS.md](AGENDAMENTOS.md).
+
+## Participação, privacidade e convites
+
+`ParticipationValidatorsTest` testa janela T−1h, permissão do criador, duplicidade, decisões, filtros e códigos seguros. `ParticipationIntegrationTest` cobre busca com filtros combinados, estados público/privado, privacidade inclusive para participantes confirmados de privadas, dados próprios, aprovação/rejeição, convites revogados, corte exato e requisições simultâneas (inclusive aprovação disputando com rejeição). CONFIRMED só é preparado pelo teste no banco temporário; nenhum endpoint de confirmação de pagamento foi implementado.
+
+A migration V13 e a constraint de participação única são exercitadas no PostgreSQL. O E2E também percorre convite privado → solicitação → aprovação → PENDING_PAYMENT entre duas contas pela interface. Contratos e limites em [PARTICIPACAO-E-CONVITES.md](PARTICIPACAO-E-CONVITES.md).
+
+## Executar somente testes unitários
+
+Os 16 testes de `ParticipationServiceTest` usam validadores reais e relógio fixo, com persistência simulada e sem inicializar Spring. Cobrem entrada pública/privada, convite sem aprovação automática, criador aguardando pagamento, recusas sem gravação, decisões, proteção de identidades, fallback de perfil e armazenamento apenas do hash do convite.
+
+Para executar os testes unitários de participação (23 casos entre serviço e validadores):
+
+```sh
+mvn -Dtest=ParticipationServiceTest,ParticipationValidatorsTest test
+```
+
+Para executar todos os testes isolados atuais (44 casos, sem PostgreSQL, Docker, contexto Spring ou navegador):
+
+```sh
+mvn -Dtest=ParticipationServiceTest,ParticipationValidatorsTest,AdvanceNoticeValidatorTest,CourtEligibilityValidatorTest,DailyCreationLimitValidatorTest,SlotAvailabilityValidatorTest,CourtAvailabilityServiceTest,AuthenticationControllerTest,TokenConfigTest test
+```
+
+A execução de `mvn test` continua incluindo integração. `VenueApprovalTest` usa contexto Spring com segurança de métodos e não integra a seleção de testes estritamente isolados acima.

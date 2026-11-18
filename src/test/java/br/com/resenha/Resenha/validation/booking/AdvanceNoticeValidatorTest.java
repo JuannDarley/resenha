@@ -11,7 +11,7 @@ class AdvanceNoticeValidatorTest {
     private final AdvanceNoticeValidator validator = new AdvanceNoticeValidator();
     private void validate(String now, String start) {
         validator.validate(new BookingContext(1L, null,
-                new DataCreateBooking(1L, LocalDateTime.parse(start), CourtType.SOCIETY, BookingVisibility.PUBLIC),
+                new DataCreateBooking(1L, LocalDateTime.parse(start), CourtType.SOCIETY, BookingVisibility.PUBLIC, SimulatedPaymentMethod.PIX, Booking.SIMULATED_PRICE),
                 LocalDateTime.parse(now)));
     }
     @Test void acceptsExactlyEightHoursAndRejectsOneSecondLess() {

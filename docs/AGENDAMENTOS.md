@@ -28,7 +28,7 @@ As regras ficam em `src/main/java/br/com/resenha/Resenha/validation/booking/`:
 - Um agendamento ocupa exatamente 1h. Não aceita início fora da grade nem segundos extras.
 - Slots após meia-noite usam a data de abertura anterior quando o estabelecimento funciona durante a madrugada.
 - Não permite sobreposição com bloqueio manual ou reserva ativa. Intervalos adjacentes são permitidos.
-- Visibilidade `PUBLIC` ou `PRIVATE`; estado inicial `OPEN` (ABERTA). Esporte e mínimo de participantes são copiados para o agendamento, preservando a configuração da criação.
+- Visibilidade `PUBLIC` ou `PRIVATE`; estado inicial `OPEN` para pagamento integral ou `PENDING_PAYMENT` para valor parcial. Esporte e mínimo de participantes são copiados para o agendamento, preservando a configuração da criação.
 
 O registro `Booking` representa o agendamento com os dados iniciais da partida. Nesta etapa não há um segundo fluxo independente de criação de partida: reservar e criar seus dados iniciais ocorrem atomicamente.
 
@@ -48,6 +48,7 @@ A exclusão física de uma quadra ou estabelecimento com histórico de agendamen
 | --- | --- | --- |
 | GET /availability/courts | PLAYER | Quadras aprovadas/configuradas, paginadas; sem identidade do proprietário |
 | GET /availability/courts/{id}?date=2026-11-20 | PLAYER | Grade, bloqueios e reservas |
+| GET /bookings/simulated-price | PLAYER | Valor de referência da simulação em reais |
 | POST /bookings | PLAYER | Criação; HTTP 201 com Location |
 | GET /bookings | PLAYER | Histórico paginado do próprio criador |
 | GET /bookings/{id} | PLAYER criador | Detalhe; retorna 404 para outro usuário |
@@ -59,9 +60,13 @@ Exemplo de criação:
   "courtId": 1,
   "startsAt": "2026-11-20T18:00:00",
   "sport": "VOLEI",
-  "visibility": "PRIVATE"
+  "visibility": "PRIVATE",
+  "paymentMethod": "PIX",
+  "paymentAmount": 50.00
 }
 ```
+
+A simulação usa R$ 50,00 por agendamento. Aceita `PIX`, `CREDIT_CARD` ou `DEBIT_CARD` e valor positivo com até duas casas decimais. Um pagamento parcial ocupa o horário e mantém a partida fora da descoberta. O histórico mostra o valor informado e o devido. Antes do envio do formulário, a tentativa existe apenas na janela de pagamento. Descartá-la deixa o horário livre e preserva a cota diária.
 
 O início é data/hora local de São Paulo, sem offset. IDs de criador, estado, mínimo, duração e data de criação não são controlados pelo cliente.
 
@@ -88,6 +93,6 @@ Os arquivos do frontend ficam em `../resenha-front`, fora deste checkout Git, co
 
 ## Próximas etapas
 
-Não foram implementados: participação pública/privada, solicitações/aprovações de entrada, convites, pagamentos, confirmação/cancelamento automático, sorteio e WhatsApp. Criar não garante automaticamente uma participação paga.
+A descoberta, solicitação pública/privada, aprovação e convites foram adicionados na etapa descrita em [PARTICIPACAO-E-CONVITES.md](PARTICIPACAO-E-CONVITES.md). Criar ou aprovar não garante participação paga. Pagamentos, confirmação/cancelamento automático, sorteio e WhatsApp permanecem pendentes.
 
 `CANCELLED` existe para a modelagem da ocupação e da cota, mas não há endpoint de cancelamento voluntário. As regras de cancelamento, estorno e taxas ainda precisam ser definidas. Não há transição automática para confirmação nesta etapa.

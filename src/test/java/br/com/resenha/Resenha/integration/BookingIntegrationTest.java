@@ -71,7 +71,7 @@ class BookingIntegrationTest extends PostgresTestSupport {
         return response.body().isBlank() ? json.nullNode() : json.readTree(response.body());
     }
     private String body(Long courtId, String start) {
-        return "{\"courtId\":" + courtId + ",\"startsAt\":\"" + start + "\",\"sport\":\"SOCIETY\",\"visibility\":\"PUBLIC\"}";
+        return "{\"courtId\":" + courtId + ",\"startsAt\":\"" + start + "\",\"sport\":\"SOCIETY\",\"visibility\":\"PUBLIC\",\"paymentMethod\":\"PIX\",\"paymentAmount\":50}";
     }
     private JsonNode create(User user, Long courtId, String start) throws Exception {
         return expect(201, request("POST", "/bookings", user, body(courtId, start)));
@@ -82,6 +82,21 @@ class BookingIntegrationTest extends PostgresTestSupport {
     private void hours(String opening, String closing) throws Exception {
         expect(200, request("PUT", "/venues", owner, "{\"id\":" + court.getVenue().getId()
                 + ",\"openingTime\":\"" + opening + "\",\"closingTime\":\"" + closing + "\"}"));
+    }
+
+    @Test void validatesSimulatedPaymentAndPersistsPartialAmount() throws Exception {
+        String payload = body(court.getId(), "2026-11-18T10:00:00");
+        for (String invalid : List.of("null", "0", "-1", "1.001")) {
+            expect(400, request("POST", "/bookings", player, payload.replace(":50}", ":" + invalid + "}")));
+        }
+        expect(400, request("POST", "/bookings", player, payload.replace("PIX", "INVALID")));
+        assertEquals(0, count(player));
+        var pending = expect(201, request("POST", "/bookings", player, payload.replace(":50}", ":49.99}")));
+        assertEquals("PENDING_PAYMENT", pending.get("status").asText());
+        var detail = expect(200, request("GET", "/bookings/" + pending.get("id").asLong(), player, null));
+        assertEquals("49.99", detail.get("paymentAmount").asText());
+        assertEquals("PIX", detail.get("paymentMethod").asText());
+        expect(409, request("POST", "/bookings", player, payload));
     }
 
     @Test void createsOpenMatchWithSnapshotsAndIsolatesHistory() throws Exception {

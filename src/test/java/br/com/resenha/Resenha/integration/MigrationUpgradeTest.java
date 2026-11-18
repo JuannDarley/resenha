@@ -25,7 +25,7 @@ class MigrationUpgradeTest extends PostgresTestSupport {
                         + "SELECT 'Antiga','CAMPO',id FROM " + schema + ".venues");
             }
             var migration = Flyway.configure().dataSource(dataSource).schemas(schema).defaultSchema(schema).load().migrate();
-            assertEquals(3, migration.migrationsExecuted);
+            assertEquals(5, migration.migrationsExecuted);
             try (var connection = dataSource.getConnection(); var statement = connection.createStatement();
                  var rows = statement.executeQuery("SELECT name, status FROM " + schema + ".venues")) {
                 assertTrue(rows.next());

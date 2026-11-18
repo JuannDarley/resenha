@@ -5,6 +5,7 @@ import br.com.resenha.Resenha.model.user.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,6 +27,16 @@ public class Booking {
     @Enumerated(EnumType.STRING) @Column(nullable = false) private BookingStatus status;
     @Column(nullable = false) private Integer minimumParticipants;
 
+    @Column(length = 64) private String invitationHash;
+
+    public void rotateInvitation(String hash) { this.invitationHash = hash; }
+
+    public static final BigDecimal SIMULATED_PRICE = new BigDecimal("50.00");
+
+    @Column(precision = 10, scale = 2) private BigDecimal paymentAmount;
+    @Column(precision = 10, scale = 2) private BigDecimal paymentDue;
+    @Enumerated(EnumType.STRING) private SimulatedPaymentMethod paymentMethod;
+
     public Booking(Court court, User creator, DataCreateBooking data, LocalDateTime now) {
         this.court = court;
         this.creator = creator;
@@ -34,7 +45,10 @@ public class Booking {
         this.createdAt = now;
         this.sport = data.sport();
         this.visibility = data.visibility();
-        this.status = BookingStatus.OPEN;
+        this.paymentMethod = data.paymentMethod();
+        this.paymentDue = SIMULATED_PRICE;
+        this.paymentAmount = data.paymentAmount();
+        this.status = paymentAmount.compareTo(paymentDue) < 0 ? BookingStatus.PENDING_PAYMENT : BookingStatus.OPEN;
         this.minimumParticipants = court.getMinimumParticipants();
     }
 }

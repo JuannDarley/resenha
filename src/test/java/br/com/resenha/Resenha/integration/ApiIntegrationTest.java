@@ -193,7 +193,7 @@ class ApiIntegrationTest extends PostgresTestSupport {
 
     @Test void migrationsAndDatabaseConstraintsAreActive() throws Exception {
         long id = venue(account("OWNER"));
-        assertEquals(12, jdbc.queryForObject("select count(*) from flyway_schema_history where success = true", Integer.class));
+        assertEquals(14, jdbc.queryForObject("select count(*) from flyway_schema_history where success = true", Integer.class));
         assertThrows(org.springframework.dao.DataIntegrityViolationException.class,
                 () -> jdbc.update("update venues set status = 'INVALID' where id = ?", id));
     }

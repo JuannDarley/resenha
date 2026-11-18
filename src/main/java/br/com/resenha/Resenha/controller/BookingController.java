@@ -19,6 +19,11 @@ public class BookingController {
     private final BookingService bookings;
     public BookingController(BookingService bookings) { this.bookings = bookings; }
 
+    @GetMapping("/simulated-price")
+    public java.math.BigDecimal simulatedPrice() {
+        return Booking.SIMULATED_PRICE;
+    }
+
     @PostMapping
     public ResponseEntity<DataBooking> create(@Valid @RequestBody DataCreateBooking data,
             @AuthenticationPrincipal User creator, UriComponentsBuilder uri) {

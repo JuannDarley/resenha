@@ -19,7 +19,7 @@ class SlotAvailabilityValidatorTest {
         when(court.getId()).thenReturn(1L); when(court.getVenue()).thenReturn(venue);
         when(venue.getOpeningTime()).thenReturn("22:00"); when(venue.getClosingTime()).thenReturn("02:00");
         var start = LocalDateTime.parse("2026-11-18T00:00:00");
-        var context = new BookingContext(1L, court, new DataCreateBooking(1L, start, CourtType.SOCIETY, BookingVisibility.PUBLIC), start.minusDays(1));
+        var context = new BookingContext(1L, court, new DataCreateBooking(1L, start, CourtType.SOCIETY, BookingVisibility.PUBLIC, SimulatedPaymentMethod.PIX, Booking.SIMULATED_PRICE), start.minusDays(1));
         when(availability.playerSlots(1L, start.toLocalDate().minusDays(1))).thenReturn(
                 List.of(new DataSlot(start, start.plusHours(1), true)),
                 List.of(new DataSlot(start, start.plusHours(1), false)), List.of());

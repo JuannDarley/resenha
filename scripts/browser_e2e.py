@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Browser regression against the real frontend, API and temporary PostgreSQL.
-Invoked by BrowserE2ETest; requires the Orca desktop app and port 5500 available.
+Invoked by BrowserE2ETest; requires the Orca desktop app and port 5510 available.
 """
 import argparse
 from datetime import datetime, timedelta
@@ -10,6 +10,7 @@ import http.server
 import json
 import os
 from pathlib import Path
+import socket
 import subprocess
 import threading
 import time
@@ -65,6 +66,13 @@ def fill(form, fields):
 def submit(form):
     evaluate(f'document.querySelector({json.dumps(form)}).requestSubmit()')
 
+def check_menu(views):
+    expected = json.dumps(sorted(views))
+    wait('JSON.stringify(Array.from(document.querySelectorAll(".nav-link[data-view]:not(.hidden)"), '
+         'link => link.dataset.view).sort()) === JSON.stringify(' + expected + ')')
+    wait('Array.from(document.querySelectorAll("[data-go]:not(.hidden)")).every('
+         'button => ' + expected + '.includes(button.dataset.go))')
+
 def register(role):
     email = f'e2e-{uuid.uuid4()}@example.com'
     click('[data-auth="register"]')
@@ -73,6 +81,7 @@ def register(role):
     wait('document.querySelector("#auth-message").textContent.includes("Conta criada")')
     submit('#login-form')
     wait('!document.querySelector("#dashboard").classList.contains("hidden")')
+    check_menu(['inicio', 'matches', 'bookings', 'jogador'] if role == 'PLAYER' else ['inicio', 'quadras'])
     return email
 
 def logout():
@@ -83,10 +92,23 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *unused):
         pass
 
-server = http.server.ThreadingHTTPServer(('127.0.0.1', 5500), functools.partial(QuietHandler, directory=str(front)))
+class IPv6Server(http.server.ThreadingHTTPServer):
+    address_family = socket.AF_INET6
+
+handler = functools.partial(QuietHandler, directory=str(front))
+try:
+    server = http.server.ThreadingHTTPServer(('127.0.0.1', 5510), handler)
+    origin = 'http://127.0.0.1:5510'
+except OSError as error:
+    import errno
+    if error.errno != errno.EADDRINUSE:
+        raise
+    server = IPv6Server(('::1', 5510), handler)
+    origin = 'http://localhost:5510'
+
 threading.Thread(target=server.serve_forever, daemon=True).start()
 try:
-    created = command('tab', 'create', '--url', 'http://127.0.0.1:5500')
+    created = command('tab', 'create', '--url', origin)
     page = created['browserPageId']
     command('snapshot', '--page', page, '--interactive')
     evaluate('localStorage.clear(); localStorage.setItem("resenha-api", ' + json.dumps(args.api) + ')')
@@ -113,6 +135,19 @@ try:
     wait('document.querySelector("#booking-slot").options.length > 0')
     first_slot = evaluate('document.querySelector("#booking-slot").value')
     submit('#booking-form')
+    wait('document.querySelector("#payment-dialog").open && !document.querySelector("#submit-payment").disabled')
+    submit('#payment-form')
+    wait('!document.querySelector("#payment-form").checkValidity()')
+    command('reload', '--page', page)
+    command('snapshot', '--page', page, '--interactive')
+    click('[data-view="bookings"]')
+    wait('document.querySelector("#booking-slot").value === ' + json.dumps(first_slot.get('result', first_slot.get('value'))))
+    wait('document.querySelector("#bookings-list").textContent.includes("ainda não criou")')
+    fill('#booking-form', {'visibility': 'PRIVATE'})
+    submit('#booking-form')
+    wait('document.querySelector("#payment-dialog").open && !document.querySelector("#submit-payment").disabled')
+    fill('#payment-form', {'paymentMethod': 'PIX', 'paymentAmount': '50.00'})
+    submit('#payment-form')
     wait('document.querySelector("#bookings-list").textContent.includes("Privada")')
     wait('document.querySelector("#bookings-list").textContent.includes("Aberta")')
     # A successful reservation must also disappear from the available options.
@@ -122,10 +157,46 @@ try:
     command('snapshot', '--page', page, '--interactive')
     click('[data-view="bookings"]')
     wait('document.querySelector("#bookings-list").textContent.includes("Privada")')
+    created_match = evaluate('document.querySelector("[data-manage-match]").dataset.manageMatch')
+    match_id = created_match.get('result', created_match.get('value'))
+    click('[data-manage-match]')
+    wait('document.querySelector("#match-manage-title").textContent.includes(' + json.dumps(str(match_id)) + ')')
+    wait('!document.querySelector("#generate-invitation").disabled')
+    click('#generate-invitation')
+    wait('document.querySelector("#match-invitation-link").value.includes("#invite=")')
+    invitation_result = evaluate('document.querySelector("#match-invitation-link").value')
+    invitation_link = invitation_result.get('result', invitation_result.get('value'))
     logout()
     print('PASS: perfil e agendamento privado persistidos; reserva retira o horário livre', flush=True)
 
-    fill('#login-form', {'email': args.booking_owner_email, 'password': 'password123', 'role': 'OWNER'})
+    applicant_email = register('PLAYER')
+    click('[data-view="matches"]')
+    fill('#invitation-form', {'code': invitation_link})
+    submit('#invitation-form')
+    wait('document.querySelector("#matches-list").textContent.includes("identidades ocultas")')
+    wait('document.querySelector(' + json.dumps('[data-join-match="' + str(match_id) + '"]') + ') !== null')
+    click('[data-join-match="' + str(match_id) + '"]')
+    wait('document.querySelector("#participations-list").textContent.includes("Aguardando aprovação")')
+    logout()
+    fill('#login-form', {'email': player_email, 'password': 'password123'})
+    submit('#login-form')
+    wait('!document.querySelector("#dashboard").classList.contains("hidden")')
+    click('[data-view="bookings"]')
+    wait('document.querySelector("[data-manage-match]") !== null')
+    click('[data-manage-match="' + str(match_id) + '"]')
+    wait('document.querySelector("[data-decide-request][data-approved=true]") !== null')
+    click('[data-decide-request][data-approved=true]')
+    wait('document.querySelector("#match-requests").textContent.includes("Aguardando pagamento")')
+    logout()
+    fill('#login-form', {'email': applicant_email, 'password': 'password123'})
+    submit('#login-form')
+    wait('!document.querySelector("#dashboard").classList.contains("hidden")')
+    click('[data-view="matches"]')
+    wait('document.querySelector("#participations-list").textContent.includes("Aguardando pagamento")')
+    logout()
+    print('PASS: convite privado, solicitação, aprovação e estado pendente de pagamento pela interface', flush=True)
+
+    fill('#login-form', {'email': args.booking_owner_email, 'password': 'password123'})
     submit('#login-form')
     wait('!document.querySelector("#dashboard").classList.contains("hidden")')
     click('[data-view="quadras"]')
@@ -172,9 +243,10 @@ try:
     logout()
     print('PASS: proprietário cadastra e configura quadra, bloqueia e libera horários persistidos', flush=True)
 
-    fill('#login-form', {'email': args.admin_email, 'password': 'password123', 'role': 'ADMIN'})
+    fill('#login-form', {'email': args.admin_email, 'password': 'password123'})
     submit('#login-form')
     wait('!document.querySelector("#dashboard").classList.contains("hidden")')
+    check_menu(['inicio', 'admin'])
     click('[data-view="admin"]')
     wait('document.querySelector("#admin-list").textContent.includes("Atleta atualizado")')
     print('PASS: administrador consulta o jogador criado pela interface', flush=True)

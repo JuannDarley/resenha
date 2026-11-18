@@ -1,4 +1,6 @@
 package br.com.resenha.Resenha.infra.security;
 
-public record DataToken(String token) {
+import br.com.resenha.Resenha.model.user.Role;
+
+public record DataToken(String token, Role role) {
 }

@@ -14,7 +14,7 @@ class CourtEligibilityValidatorTest {
         var court = mock(Court.class); var venue = mock(Venue.class);
         when(court.getVenue()).thenReturn(venue); when(court.getType()).thenReturn(CourtType.VOLEI);
         var context = new BookingContext(1L, court,
-                new DataCreateBooking(1L, LocalDateTime.now(), CourtType.VOLEI, BookingVisibility.PRIVATE), LocalDateTime.now());
+                new DataCreateBooking(1L, LocalDateTime.now(), CourtType.VOLEI, BookingVisibility.PRIVATE, SimulatedPaymentMethod.PIX, Booking.SIMULATED_PRICE), LocalDateTime.now());
         var validator = new CourtEligibilityValidator();
         when(venue.getStatus()).thenReturn(VenueStatus.PENDING);
         assertEquals(409, assertThrows(ResponseStatusException.class, () -> validator.validate(context)).getStatusCode().value());
